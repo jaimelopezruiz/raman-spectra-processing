@@ -31,15 +31,11 @@ def plot_and_report(x, y, y_fit_total, fitted_peaks, peak_params,
             mu = peak_params[i]["mu"]
             plt.plot(x, y_peak, linestyle=':', label=f'Peak {i+1} ({model}, {mu:.1f})')
 
-    if annotate:
-        for i, row in enumerate(peak_params):
-            mu = row["mu"]
-            idx = np.abs(x - mu).argmin()
-            height = y[idx]
-            y_pos = height + (label_offset * (1.1 if (stagger_labels and i % 2) else 1.0))
-            plt.axvline(mu, linestyle="--", color="gray", alpha=0.6)
-            plt.text(mu, y_pos, f"{mu:.1f}", ha="center", va="bottom",
-                     fontsize=font_size, color='black', fontweight='bold')
+    #if annotate:
+    #   for row in peak_params:
+    #        mu = row["mu"]
+    #        plt.axvline(mu, linestyle="--", color="gray", alpha=0.6)
+
 
     plt.xlabel("Raman Shift (cm⁻¹)")
     plt.ylabel("Intensity")

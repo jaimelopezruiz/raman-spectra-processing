@@ -13,7 +13,7 @@ def preprocess(
     crop_max=2000,
     sg_window=11,
     sg_polyorder=3,
-    imodpoly_order=8,
+    imodpoly_order=5,
     imodpoly_tol=1e-3,
     imodpoly_max_iter=100,
     normalisation="vector-0to1",
