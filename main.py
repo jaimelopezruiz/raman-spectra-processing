@@ -17,7 +17,7 @@ PEAKS = [
     ("pvoigt", 0.40, 880, 10),
     ("pvoigt", 0.60, 930, 10),
     ("gauss", 0.2, 1400, 10),
-    ("gauss", 0.1, 1750, 10),
+    ("gauss", 0.1, 1600, 10),
 ]
 
 # === File Input Handling ===
