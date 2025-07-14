@@ -15,7 +15,7 @@ def preprocess(
     sg_polyorder=3,
     imodpoly_order=5,
     imodpoly_tol=1e-3,
-    imodpoly_max_iter=100,
+    imodpoly_max_iter=1000,
     normalisation="vector-0to1",
     plot=True,
     save_path=None
