@@ -26,11 +26,6 @@ processed = pipeline.apply(spectrum)
 x_proc_full = processed.spectral_axis
 y_proc_full = processed.spectral_data
 
-# === Zoom in to region of interest (e.g. 700–1000 cm⁻¹) ===
-mask = (x_proc_full >= 700) & (x_proc_full <= 1000)
-x_proc = x_proc_full[mask]
-y_proc = y_proc_full[mask]
-
 
 from scipy.optimize import curve_fit
 import numpy as np
@@ -54,115 +49,105 @@ def pseudo_voigt(x, amp, cen, wid, eta=0.5):
     l = lorentzian(x, amp, cen, wid)
     return eta * l + (1 - eta) * g
 
-
-
-# === Define peaks: ("shape", amplitude, center, width) ===
-peak_definitions = [
-    ("pvoigt", 0.1, 790, 5),
-    ("gauss",  0.1, 880, 10),
-    ("pvoigt", 0.2, 910, 10),
+# === Define regions and peaks for fitting ===
+regions = [
+    (150, 400, [("gauss", 0.06, 200, 5), ("gauss", 0.06, 280, 5)]),
+    (500, 600, [("pvoigt", 0.06, 525, 5), ("pvoigt", 0.06, 560, 5)]),
+    (750,790, [("pvoigt", 0.04, 770, 5)]),
+    (800, 950, [("gauss", 0.06, 875, 5), ("pvoigt", 0.06, 910, 5)]),
+    (1300, 1650, [("gauss", 0.06, 1380, 10), ("gauss", 0.06, 1580, 10)])
 ]
 
+x_grid = x_proc_full
+y_fit_total = np.zeros_like(x_grid)
+all_peak_centers = []
 
-baseline_offset = 0.0
+for start, end, peak_defs in regions:
+    mask = (x_proc_full >= start) & (x_proc_full <= end)
+    x_crop = x_proc_full[mask]
+    y_crop = y_proc_full[mask]
 
-# === Build initial guess from peak_definitions ===
-initial_guesses = []
-for shape, amp, cen, wid in peak_definitions:
-    initial_guesses.extend([amp, cen, wid])
-initial_guesses.append(baseline_offset)
-
-# === Mixed model using all shapes ===
-def mixed_model(x, *params):
-    y = np.zeros_like(x)
-    for i, (shape, _, _, _) in enumerate(peak_definitions):
-        amp, cen, wid = params[3*i:3*i+3]
-        if shape == "gauss":
-            y += gaussian(x, amp, cen, wid)
-        elif shape == "lorentz":
-            y += lorentzian(x, amp, cen, wid)
-        elif shape == "pvoigt":
-            y += pseudo_voigt(x, amp, cen, wid)
-
-        else:
-            raise ValueError(f"Unknown peak shape: {shape}")
-    return y + params[-1]
-
-#set boundaries
-# === Create parameter bounds to constrain the fit ===
-lower_bounds = []
-upper_bounds = []
-
-for shape, amp, cen, wid in peak_definitions:
-    lower_bounds += [0, cen - 100, 1]          # amplitude > 0, width > 1
-    upper_bounds += [2*amp, cen + 100, 100]    # reasonable amplitude/width limits
-
-lower_bounds.append(-0.2)  # offset
-upper_bounds.append(0.2)
+    init, lb, ub = [], [], []
+    for shape, amp, cen, wid in peak_defs:
+        init += [amp, cen, wid]
+        lb += [0, cen - 30, 1]
+        ub += [2*amp, cen + 30, 100]
+    init += [0.0]
+    lb += [-1e-6]
+    ub += [1e-6]
 
 
+    def model(x, *params):
+        y = np.zeros_like(x)
+        for i, (shape, _, _, _) in enumerate(peak_defs):
+            amp, cen, wid = params[3*i:3*i+3]
+            if shape == "gauss":
+                y += gaussian(x, amp, cen, wid)
+            elif shape == "lorentz":
+                y += lorentzian(x, amp, cen, wid)
+            elif shape == "pvoigt":
+                y += pseudo_voigt(x, amp, cen, wid)
+        return y + params[-1]
 
-# === Fit the model to your preprocessed spectrum ===
-popt, pcov = curve_fit(mixed_model, x_proc, y_proc, p0=initial_guesses, bounds = (lower_bounds, upper_bounds), maxfev = 200000)
+    popt, _ = curve_fit(model, x_crop, y_crop, p0=init, bounds=(lb, ub), maxfev=100000)
+    y_fit_total += model(x_grid, *popt)
 
-# === Plot: Raw data, total fit, and each peak ===
+    for i in range(len(peak_defs)):
+        _, cen, _ = popt[3*i:3*i+3]
+        all_peak_centers.append(cen)
+
+# === Plot: full spectrum + combined fit ===
 plt.figure(figsize=(12, 6))
-plt.plot(x_proc, y_proc, 'k-', label='Processed Data (Full)')
-plt.plot(x_proc, mixed_model(x_proc, *popt), 'r--', label='Total Fit')
+plt.plot(x_proc_full, y_proc_full, 'k-', label="Processed Spectrum")
+plt.plot(x_proc_full, y_fit_total, 'r--', label="Summed Regional Fit")
 
-n_peaks = len(peak_definitions)
-for i, (shape, _, _, _) in enumerate(peak_definitions):
-    amp, cen, wid = popt[3*i:3*i+3]
-    if shape == "gauss":
-        peak = gaussian(x_proc, amp, cen, wid)
-    elif shape == "lorentz":
-        peak = lorentzian(x_proc, amp, cen, wid)
-    elif shape == "pvoigt":
-        peak = pseudo_voigt(x_proc, amp, cen, wid)
-
-    plt.plot(x_proc, peak, linestyle=':', label=f'Peak {i+1} ({shape}, {cen:.1f} cm⁻¹)')
+for cen in all_peak_centers:
+    plt.axvline(cen, color="gray", linestyle="--", linewidth=1)
+    plt.text(cen, max(y_proc_full)*0.05, f"{cen:.1f}", ha='center', va='bottom',
+             fontsize=9, color='black', fontweight='bold')
 
 plt.xlabel("Raman Shift (cm⁻¹)")
 plt.ylabel("Intensity (a.u.)")
-plt.title("Mixed-Peak Fit (Zoomed 700–1000 cm⁻¹)")
+plt.title("Combined Fit from Multiple Zoomed Regions")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-# === Print Origin-style peak table ===
-def fwhm(w): return 2.3548 * abs(w)  # for Gaussian estimate
 
-print("Fitted Peaks:\n")
-for i, (shape, _, _, _) in enumerate(peak_definitions):
-    amp, cen, wid = popt[3*i:3*i+3]
-    area = amp * wid * np.sqrt(2 * np.pi)  # rough estimate
-    print(f"Peak {i+1} ({shape}):")
-    print(f"  Center = {cen:.2f} cm⁻¹")
-    print(f"  FWHM   = {fwhm(wid):.2f} cm⁻¹")
-    print(f"  Height = {amp:.3f}")
-    print(f"  Area   = {area:.3f}\n")
+# # === Print Origin-style peak table ===
+# def fwhm(w): return 2.3548 * abs(w)  # for Gaussian estimate
+
+# print("Fitted Peaks:\n")
+# for i, (shape, _, _, _) in enumerate(peak_definitions):
+#     amp, cen, wid = popt[3*i:3*i+3]
+#     area = amp * wid * np.sqrt(2 * np.pi)  # rough estimate
+#     print(f"Peak {i+1} ({shape}):")
+#     print(f"  Center = {cen:.2f} cm⁻¹")
+#     print(f"  FWHM   = {fwhm(wid):.2f} cm⁻¹")
+#     print(f"  Height = {amp:.3f}")
+#     print(f"  Area   = {area:.3f}\n")
 
 
-# === Final labeled plot with bold, staggered wavenumber labels ===
-plt.figure(figsize=(12, 6))
-plt.plot(x_proc, y_proc, color='red', label='Processed Data')
+# # === Final labeled plot with bold, staggered wavenumber labels ===
+# plt.figure(figsize=(12, 6))
+# plt.plot(x_proc, y_proc, color='red', label='Processed Data')
 
-# Stagger heights: alternate label height to reduce overlap
-for i in range(len(peak_definitions)):
-    _, cen, _ = popt[3*i:3*i+3]
-    y_offset = max(y_proc) * (0.05 if i % 2 == 0 else 0.1)  # staggered
-    plt.axvline(x=cen, color='gray', linestyle='--', linewidth=1)
-    plt.text(cen, y_offset, f"{cen:.1f}",
-             rotation=0, ha='center', va='bottom',
-             fontsize=9, color='black', fontweight='bold')
+# # Stagger heights: alternate label height to reduce overlap
+# for i in range(len(peak_definitions)):
+#     _, cen, _ = popt[3*i:3*i+3]
+#     y_offset = max(y_proc) * (0.05 if i % 2 == 0 else 0.1)  # staggered
+#     plt.axvline(x=cen, color='gray', linestyle='--', linewidth=1)
+#     plt.text(cen, y_offset, f"{cen:.1f}",
+#              rotation=0, ha='center', va='bottom',
+#              fontsize=9, color='black', fontweight='bold')
 
-plt.xlabel("Raman Shift")
-plt.ylabel("Intensity")
-plt.title("Fitted Peak Centers (Wavenumbers)")
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+# plt.xlabel("Raman Shift")
+# plt.ylabel("Intensity")
+# plt.title("Fitted Peak Centers (Wavenumbers)")
+# plt.grid(True)
+# plt.tight_layout()
+# plt.show()
 
 #import matplotlib.pyplot as plt
 #import textwrap
