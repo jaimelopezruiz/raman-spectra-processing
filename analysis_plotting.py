@@ -93,7 +93,7 @@ def plot_and_report(x, y, y_fit_total, fitted_peaks, peak_params,
                 f"  Area   = {row['Area']:.3f}\n\n"
             )
 
-        plt.figure(figsize=(8, 6))
+        plt.figure(figsize=(6, 12), dpi=120)
         plt.axis("off")
         wrapped_text = textwrap.fill(peak_text, width=80)
         plt.text(0.01, 0.99, peak_text, fontsize=10, va='top', ha='left', family='monospace')
