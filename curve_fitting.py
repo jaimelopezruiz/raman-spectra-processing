@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.special import wofz
-from scipy.integrate import simpson
+from scipy.integrate import simps
 
 # === Peak Models ===
 def gaussian(x, A, mu, sigma):

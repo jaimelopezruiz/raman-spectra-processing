@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import ramanspy as rp
 from ramanspy import preprocessing
 
+def min_max_normalise_array(arr):
+    return (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
+
 def preprocess(
     input_path,
     crop_min=150,
@@ -13,59 +16,63 @@ def preprocess(
     imodpoly_order=8,
     imodpoly_tol=1e-3,
     imodpoly_max_iter=100,
-    normalisation="vector",   # "vector" or "max"
+    normalisation="vector-0to1",
     plot=True,
     save_path=None
 ):
     """
-    Preprocesses a Raman spectrum from CSV.
+    Preprocesses a Raman spectrum with denoising, baseline removal, and normalisation.
+    Returns x and y as numpy arrays.
 
-    Parameters:
-        input_path (str): Path to the input CSV file.
-        crop_min (float): Minimum Raman shift to keep.
-        crop_max (float): Maximum Raman shift to keep.
-        sg_window (int): Savitzky-Golay window size.
-        sg_polyorder (int): SG polynomial order.
-        imodpoly_order (int): I-ModPoly polynomial order.
-        imodpoly_tol (float): I-ModPoly tolerance.
-        imodpoly_max_iter (int): Max iterations for I-ModPoly.
-        normalisation (str): "vector" or "max".
-        plot (bool): Whether to show comparison plot.
-        save_path (str or None): If given, saves processed spectrum to this path.
-
-    Returns:
-        tuple: (x_processed, y_processed)
+    Normalisation options:
+        - "vector"       → L2 norm
+        - "vector-0to1"  → L2 norm + rescale to [0,1]
+        - "min-max"      → rescale to [0,1]
+        - "max"          → divide by max(y)
     """
 
     # === Load and clean CSV ===
     df = pd.read_csv(input_path, encoding="latin1", sep=None, engine="python")
     df.columns = df.columns.str.strip()
-    x_col = df.columns[0]
-    y_col = df.columns[1]
+    x_col, y_col = df.columns[:2]
 
     df[x_col] = pd.to_numeric(df[x_col], errors="coerce")
     df[y_col] = pd.to_numeric(df[y_col], errors="coerce")
     df = df.dropna()
     df = df[(df[x_col] >= crop_min) & (df[x_col] <= crop_max)]
-    df = df.sort_values(by=x_col)  # <-- sort by x-axis so it is plottable in excel too
+    df = df.sort_values(by=x_col)
 
     x_raw = df[x_col].values
     y_raw = df[y_col].values
     raw_spectrum = rp.Spectrum(y_raw, x_raw)
 
-    # === Apply preprocessing steps ===
+    # === Apply preprocessing ===
     denoiser = preprocessing.denoise.SavGol(window_length=sg_window, polyorder=sg_polyorder)
-    baseline = preprocessing.baseline.IModPoly(
-        poly_order=imodpoly_order, tol=imodpoly_tol, max_iter=imodpoly_max_iter
-    )
-    if normalisation.lower() == "vector":
-        normaliser = preprocessing.normalise.Vector()
-    else:
-        normaliser = preprocessing.normalise.MaxIntensity()
-
+    baseline = preprocessing.baseline.IModPoly(poly_order=imodpoly_order, tol=imodpoly_tol, max_iter=imodpoly_max_iter)
     s_denoised = denoiser.apply(raw_spectrum)
     s_baseline = baseline.apply(s_denoised)
-    s_processed = normaliser.apply(s_baseline)
+
+    norm_mode = normalisation.lower()
+
+    if norm_mode == "vector":
+        normaliser = preprocessing.normalise.Vector()
+        s_processed = normaliser.apply(s_baseline)
+
+    elif norm_mode == "max":
+        normaliser = preprocessing.normalise.MaxIntensity()
+        s_processed = normaliser.apply(s_baseline)
+
+    elif norm_mode == "vector-0to1":
+        vec_norm = preprocessing.normalise.Vector().apply(s_baseline)
+        y_scaled = min_max_normalise_array(vec_norm.spectral_data)
+        s_processed = rp.Spectrum(y_scaled, vec_norm.spectral_axis)
+
+    elif norm_mode == "min-max":
+        y_scaled = min_max_normalise_array(s_baseline.spectral_data)
+        s_processed = rp.Spectrum(y_scaled, s_baseline.spectral_axis)
+
+    else:
+        raise ValueError(f"[!] Unknown normalisation method: {normalisation}")
 
     x_proc = s_processed.spectral_axis
     y_proc = s_processed.spectral_data
@@ -86,13 +93,13 @@ def preprocess(
         plt.tight_layout()
         plt.show()
 
-    # === Save to file if needed ===
+    # === Save processed CSV ===
     if save_path:
-        out_df = pd.DataFrame({
+        df_out = pd.DataFrame({
             "Raman Shift (cm-1)": x_proc,
             "Processed Intensity": y_proc
         })
-        out_df.to_csv(save_path, index=False)
+        df_out.to_csv(save_path, index=False)
         print(f"[✓] Processed spectrum saved to: {save_path}")
 
     return x_proc, y_proc

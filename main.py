@@ -34,9 +34,10 @@ def main():
     print(f"[✓] Selected file: {filename}.csv")
 
     # Output paths
+    os.makedirs("output", exist_ok=True)
     save_processed = f"output/{filename}_processed.csv"
     save_fitted_curve = f"output/{filename}_fitted_curve.csv"
-    save_fitted_params = f"output/{filename}_fitted_params.csv"
+    save_fitted_params = f"output/{filename}_fitted_params.xlsx"  # now xlsx
 
     # === Preprocessing Settings ===
     crop_min = 150
@@ -46,13 +47,14 @@ def main():
     imodpoly_order = 8
     imodpoly_tol = 1e-3
     imodpoly_max_iter = 100
-    normalisation = "vector"  # or "max"
+    normalisation = "vector-0to1"  # Options: vector, max, min-max, vector-0to1
 
     # === Peak Definitions ===
     peak_groups = [
-        {"model": ["gaussian", "voigt"], "center": [770, 900], "window": 80},
-        {"model": "gaussian", "center": 1350, "window": 60},
-        {"model": "gaussian", "center": 1600, "window": 60},
+        {"model": "gaussian", "center": 520, "window": 60},
+        {"model": ["gaussian", "gaussian", "gaussian"], "center": [770, 870, 900], "window": 150},
+        {"model": "gaussian", "center": 1400, "window": 60},
+        {"model": "gaussian", "center": 1750, "window": 60},
     ]
 
     # === Run Pipeline ===
@@ -76,7 +78,8 @@ def main():
         x_full=x_proc,
         y_full=y_proc,
         peak_groups=peak_groups,
-        bounds=None  # Add if needed
+        bounds=None,         # will be auto-generated
+        auto_bounds=True     # enforce ±100 cm⁻¹ bounds
     )
 
     print("[3] Plotting & analysis...")
