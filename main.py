@@ -4,7 +4,7 @@ from curve_fitting import fit_peaks
 from analysis_plotting import plot_and_report
 
 # === User Input ===
-input_file = "data/input_spectrum.csv"           # Path to your raw CSV
+input_file = "input/Dark Grey.csv"           # Path to your raw CSV
 save_processed = "output/processed.csv"          # Processed spectrum output (optional)
 save_fitted_curve = "output/fitted_curve.csv"    # Fitted curve output
 save_fitted_params = "output/fitted_params.csv"  # Fitted peak parameter table
