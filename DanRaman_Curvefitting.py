@@ -1,3 +1,4 @@
+#Raman Code
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,7 +7,7 @@ import ramanspy as rp
 from ramanspy import preprocessing
 
 #Read Data
-data = pd.read_csv("c:/Users/danie/OneDrive/Oxford 2025/03 Data/03 Processed Data/19C_Si-Cr_unirradiated/Dark Grey.csv", encoding="latin1", sep=",")
+data = pd.read_csv("c:/Users/danie/OneDrive/Oxford 2025/03 Data/02 irradiated/Refel_Ne_300_2.5/Dark Grey.csv", encoding="latin1", sep=",")
 data_sorted = data.sort_values(by="#Wave")
 x = data_sorted["#Wave"].values
 y = data_sorted["#Intensity"].values
@@ -41,31 +42,26 @@ def gaussian(x, amp, cen, wid):
 def lorentzian(x, amp, cen, wid):
     return amp * (wid**2 / ((x - cen)**2 + wid**2))
 
-def voigt(x, amp, cen, wid):
-    sigma = wid / np.sqrt(2 * np.log(2))
-    gamma = wid / 2
-    z = ((x - cen) + 1j*gamma) / (sigma * np.sqrt(2))
-    return amp * np.real(wofz(z)) / (sigma * np.sqrt(2 * np.pi))
+def pseudo_voigt(x, amp, cen, wid, eta=0.5):
+    g = gaussian(x, amp, cen, wid)
+    l = lorentzian(x, amp, cen, wid)
+    return eta * l + (1 - eta) * g
+
+
 
 # === Define peaks: ("shape", amplitude, center, width) ===
 peak_definitions = [
     #("gauss",   0.05, 240, 15),
-    ("gauss",   0.06, 150, 5),
-    ("gauss",   0.06, 210, 5),
-    ("gauss",   0.06, 240, 5),
-    ("gauss",   0.001, 255, 5),
-    ("gauss",   0.06, 320, 5),
-    ("gauss",   0.06, 360, 5),
-    ("gauss",   0.06, 400, 5),
-    ("gauss",   0.06, 520, 5),
-    ("lorentz",   0.1, 760, 10),
+    ("gauss",   0.06, 200, 5),
+    ("gauss",   0.04, 240, 5),
+    ("lorentz",   0.06, 520, 5),
+    ("gauss",   0.06, 560, 10),
     #("lorentz", 0.1, 550, 10),
-    ("lorentz", 0.2, 790, 5),
-    ("lorentz",   0.2, 970, 10),
+    ("pvoigt", 0.1, 790, 5),
+    ("gauss",   0.1, 880, 10),
+    ("pvoigt",   0.2, 910, 10),
     ("gauss",   0.12, 1350, 10),
-    ("gauss",   0.05, 1500, 10),
     ("gauss",   0.05, 1580, 10),
-    ("gauss",   0.1, 1700, 10),
 
 ]
 
@@ -86,8 +82,9 @@ def mixed_model(x, *params):
             y += gaussian(x, amp, cen, wid)
         elif shape == "lorentz":
             y += lorentzian(x, amp, cen, wid)
-        elif shape == "voigt":
-            y += voigt(x, amp, cen, wid)
+        elif shape == "pvoigt":
+            y += pseudo_voigt(x, amp, cen, wid)
+
         else:
             raise ValueError(f"Unknown peak shape: {shape}")
     return y + params[-1]
@@ -121,8 +118,9 @@ for i, (shape, _, _, _) in enumerate(peak_definitions):
         peak = gaussian(x_proc, amp, cen, wid)
     elif shape == "lorentz":
         peak = lorentzian(x_proc, amp, cen, wid)
-    elif shape == "voigt":
-        peak = voigt(x_proc, amp, cen, wid)
+    elif shape == "pvoigt":
+        peak = pseudo_voigt(x_proc, amp, cen, wid)
+
     plt.plot(x_proc, peak, linestyle=':', label=f'Peak {i+1} ({shape}, {cen:.1f} cm⁻¹)')
 
 plt.xlabel("Raman Shift (cm⁻¹)")
