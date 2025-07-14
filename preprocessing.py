@@ -47,6 +47,7 @@ def preprocess(
     df[y_col] = pd.to_numeric(df[y_col], errors="coerce")
     df = df.dropna()
     df = df[(df[x_col] >= crop_min) & (df[x_col] <= crop_max)]
+    df = df.sort_values(by=x_col)  # <-- sort by x-axis so it is plottable in excel too
 
     x_raw = df[x_col].values
     y_raw = df[y_col].values

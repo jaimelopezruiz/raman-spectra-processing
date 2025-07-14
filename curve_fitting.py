@@ -21,7 +21,7 @@ model_funcs = {
 }
 
 # === Fit Function ===
-def fit_peaks(x_full, y_full, peak_groups, bounds=None, maxfev=20000):
+def fit_peaks(x_full, y_full, peak_groups, bounds=None, maxfev=20000, auto_bounds=True):
     """
     Fits one or more peak groups to the provided spectrum.
 
@@ -89,6 +89,16 @@ def fit_peaks(x_full, y_full, peak_groups, bounds=None, maxfev=20000):
 
         # Fit
         try:
+            if auto_bounds:
+                lower, upper = [], []
+                for center, m in zip(centers, models):
+                    if m == "gaussian" or m == "lorentzian":
+                        lower += [0, center - 100, 1]
+                        upper += [np.max(y), center + 100, 100]
+                    elif m == "voigt":
+                        lower += [0, center - 100, 1, 1]
+                        upper += [np.max(y), center + 100, 100, 100]
+                bounds = (lower, upper)
             popt, _ = curve_fit(composite, x, y, p0=p0, maxfev=maxfev, bounds=bounds or (-np.inf, np.inf))
             y_fit = composite(x_full, *popt)
             y_fit_total += y_fit
