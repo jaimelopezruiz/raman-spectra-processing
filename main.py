@@ -1,23 +1,20 @@
-# === Raman Spectrum Analysis Pipeline ===
+# === Raman Spectrum Analysis Pipeline (Region-Based Fitting) ===
 import os
 import argparse
 import tkinter as tk
 from tkinter import filedialog
 
 from preprocessing import preprocess
-from curve_fitting import fit_peaks
+from curve_fitting import fit_peaks_regionwise
 from analysis_plotting import plot_and_report
 
-# === Peak Definitions ===
-# Format: (model, amp_guess, center_guess, width_guess)
-PEAKS = [
-    ("lorentz", 0.5, 520, 5),
-    ("gauss", 0.7, 560, 10),
-    ("pvoigt", 0.40, 790, 10),
-    ("pvoigt", 0.40, 880, 10),
-    ("pvoigt", 0.60, 930, 10),
-    ("gauss", 0.2, 1400, 10),
-    ("gauss", 0.1, 1600, 10),
+# === Region Definitions ===
+# Format: (start, end, [ (model, amp, center, width), ... ])
+REGIONS = [
+    (200, 275, [("gauss", 0.1, 200, 5), ("gauss", 0.1, 270, 5)]),
+    (410, 625, [("lorentz", 0.3, 525, 5), ("pvoigt", 0.2, 560, 5)]),
+    (735, 943, [("gauss", 0.45, 780, 4), ("gauss", 0.5, 870, 5), ("pvoigt", 0.6, 910, 5)]),
+    (1300, 1650, [("gauss", 0.6, 1380, 10), ("gauss", 0.6, 1580, 10)]),
 ]
 
 # === File Input Handling ===
@@ -30,7 +27,7 @@ def choose_file_dialog():
     )
 
 def get_input_file():
-    parser = argparse.ArgumentParser(description="Raman Curve Fitting Pipeline")
+    parser = argparse.ArgumentParser(description="Raman Curve Fitting Pipeline (Region-Based)")
     parser.add_argument("--input", help="Path to input CSV file")
     args = parser.parse_args()
     return args.input if args.input else choose_file_dialog()
@@ -55,16 +52,16 @@ def main():
         crop_max=2000,
         sg_window=11,
         sg_polyorder=3,
-        imodpoly_order=8,
+        imodpoly_order=11,
         imodpoly_tol=1e-3,
-        imodpoly_max_iter=100,
+        imodpoly_max_iter=200,
         normalisation="vector-0to1",
         plot=True,
         save_path=f"output/{filename}_processed.csv"
     )
 
-    # === Step 2: Curve Fitting ===
-    y_fit_total, fitted_peaks, peak_params = fit_peaks(x, y, PEAKS)
+    # === Step 2: Region-Based Curve Fitting ===
+    y_fit_total, fitted_peaks, peak_params = fit_peaks_regionwise(x, y, REGIONS)
 
     # === Step 3: Plot and Report ===
     plot_and_report(
@@ -79,7 +76,6 @@ def main():
         save_curve_path=f"output/{filename}_fitted_curve.csv",
         save_params_path=f"output/{filename}_peak_parameters.csv"
     )
-
 
 if __name__ == "__main__":
     main()
