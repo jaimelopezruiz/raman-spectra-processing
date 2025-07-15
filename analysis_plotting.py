@@ -112,3 +112,4 @@ def plot_and_report(x, y, y_fit_total, fitted_peaks, peak_params,
         df_params.columns = ["Peak", "Model", "Center (cm⁻¹)", "FWHM (cm⁻¹)", "Area", "Relative Intensity"]
         df_params.to_csv(save_params_path, index=False)
         print(f"[✓] Fitted parameters saved to: {save_params_path}")
+

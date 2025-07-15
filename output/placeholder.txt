@@ -1,0 +1,1 @@
+Folder to output processed spectra, curve-fitted spectra and parameters for the latter
