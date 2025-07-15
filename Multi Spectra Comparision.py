@@ -1,37 +1,60 @@
-#Multi Spectra Comparision
+# Multi Spectra Comparison (Already Processed Data)
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-import ramanspy as rp
-from ramanspy import preprocessing
+import argparse
+import tkinter as tk
+from tkinter import filedialog
 
-# === List all your input files here ===
-file_paths = [
-    "c:/Users/danie/OneDrive/Oxford 2025/03 Data/03 Processed Data/Refel_Ne_300_2.5/Dark Grey Focused.csv",
-    "c:/Users/danie/OneDrive/Oxford 2025/03 Data/03 Processed Data/Refel_Si_300_2.5/Dark Grey Focused.csv",
-    #"c:/Users/danie/OneDrive/Oxford 2025/03 Data/03 Processed Data/19C_Si-Cr_Si_300_0.25/Dark Grey.csv",
-    #"c:/Users/danie/OneDrive/Oxford 2025/03 Data/03 Processed Data/19C_Si-Cr_Si_750_2.5/Dark Grey.csv",
-    
-    # Add more files below as needed
-    # "path/to/another/spectrum.csv",
-]
 
-# === Define preprocessing pipeline ===
-pipeline = preprocessing.Pipeline([
-    preprocessing.denoise.SavGol(window_length=11, polyorder=3),
-    preprocessing.baseline.IModPoly(poly_order=5),
-    preprocessing.normalise.Vector()
-])
+def choose_file_dialog(multiple=True):
+    root = tk.Tk()
+    root.withdraw()
+    if multiple:
+        return filedialog.askopenfilenames(
+            title="Select Raman CSV Files",
+            filetypes=[("CSV files", "*.csv")]
+        )
+    else:
+        return [filedialog.askopenfilename(
+            title="Select a Raman CSV File",
+            filetypes=[("CSV files", "*.csv")]
+        )]
 
-# === Load + preprocess each file ===
-def load_and_preprocess(filepath):
-    data = pd.read_csv(filepath, encoding="latin1", sep=",")
-    x = data["#Wave"].values
-    y = data["#Intensity"].values
-    spectrum = rp.Spectrum(y, x)
-    return pipeline.apply(spectrum)
+def get_input_files():
+    parser = argparse.ArgumentParser(description="Raman Spectra Plotter")
+    parser.add_argument("--input", nargs="*", help="Path(s) to CSV files or directories")
+    args = parser.parse_args()
+
+    if args.input:
+        all_files = []
+        for path in args.input:
+            if os.path.isdir(path):
+                files_in_dir = [
+                    os.path.join(path, f)
+                    for f in os.listdir(path)
+                    if f.lower().endswith(".csv")
+                ]
+                all_files.extend(files_in_dir)
+            else:
+                all_files.append(path)
+        return all_files
+    else:
+        return list(choose_file_dialog(multiple=True))
+
+# Use this to populate your list of files
+file_paths = get_input_files()
+
+
+def load_processed_spectrum(filepath):
+    data = pd.read_csv(filepath)  # uses headers automatically
+    x = data["Raman Shift (cm-1)"].values
+    y = data["Processed Intensity"].values
+    return x, y
+
+
 
 # === Plotting ===
 plt.figure(figsize=(12, 6))
@@ -42,19 +65,16 @@ for i, file in enumerate(file_paths):
     name = os.path.splitext(os.path.basename(file))[0]
     label = f"{folder} {name}"
 
-    processed = load_and_preprocess(file)
-    x, y = processed.spectral_axis, processed.spectral_data
+    x, y = load_processed_spectrum(file)
 
     # Apply vertical offset to each curve
-    # Scale offset to preserve spectral shape
     y_offset = y + i * (np.max(y) - np.min(y)) * offset_step
-
 
     plt.plot(x, y_offset, label=label, linewidth=1.5)
 
 plt.xlabel("Raman Shift (cm⁻¹)")
 plt.ylabel("Offset Intensity (a.u.)")
-plt.title("Vertically Offset Overlay of Preprocessed Raman Spectra")
+plt.title("Vertically Offset Overlay of Processed Raman Spectra")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
