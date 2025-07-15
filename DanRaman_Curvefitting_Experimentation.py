@@ -95,23 +95,181 @@ for start, end, peak_defs in regions:
         _, cen, _ = popt[3*i:3*i+3]
         all_peak_centers.append(cen)
 
-# === Plot: full spectrum + combined fit ===
+# === Plot: full spectrum + combined fit and all individual peaks ===
 plt.figure(figsize=(12, 6))
+
+# Plot original processed spectrum
 plt.plot(x_proc_full, y_proc_full, 'k-', label="Processed Spectrum")
+
+# Plot total fit
 plt.plot(x_proc_full, y_fit_total, 'r--', label="Summed Regional Fit")
+
+# === Plot individual component peaks again, globally ===
+# Redo loop to overlay components from each region
+for start, end, peak_defs in regions:
+    mask = (x_proc_full >= start) & (x_proc_full <= end)
+    x_crop = x_proc_full[mask]
+    y_crop = y_proc_full[mask]
+
+    init, lb, ub = [], [], []
+    for shape, amp, cen, wid in peak_defs:
+        init += [amp, cen, wid]
+        lb += [0, cen - 30, 1]
+        ub += [2*amp, cen + 30, 100]
+    init += [0.0]
+    lb += [-1e-6]
+    ub += [1e-6]
+
+    def model(x, *params):
+        y = np.zeros_like(x)
+        for i, (shape, _, _, _) in enumerate(peak_defs):
+            amp, cen, wid = params[3*i:3*i+3]
+            if shape == "gauss":
+                y += gaussian(x, amp, cen, wid)
+            elif shape == "lorentz":
+                y += lorentzian(x, amp, cen, wid)
+            elif shape == "pvoigt":
+                y += pseudo_voigt(x, amp, cen, wid)
+        return y + params[-1]
+
+    popt, _ = curve_fit(model, x_crop, y_crop, p0=init, bounds=(lb, ub), maxfev=100000)
+
+    # Plot individual peaks
+    for i, (shape, _, _, _) in enumerate(peak_defs):
+        amp, cen, wid = popt[3*i:3*i+3]
+        if shape == "gauss":
+            y_peak = gaussian(x_proc_full, amp, cen, wid)
+        elif shape == "lorentz":
+            y_peak = lorentzian(x_proc_full, amp, cen, wid)
+        elif shape == "pvoigt":
+            y_peak = pseudo_voigt(x_proc_full, amp, cen, wid)
+
+        plt.plot(x_proc_full, y_peak, linestyle=':', linewidth=1)
+
+# Final plot styling
+plt.xlabel("Raman Shift (cm⁻¹)")
+plt.ylabel("Intensity (a.u.)")
+plt.title("Combined Fit with All Component Peaks")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# === Final labeled plot with staggered peak labels ===
+plt.figure(figsize=(12, 6))
+plt.plot(x_proc_full, y_proc_full, color='red', label='Processed Data')
+plt.plot(x_proc_full, y_fit_total, 'r--', label="Summed Regional Fit")
+
+label_count = 0  # to stagger labels
+
+# Loop over regions again to re-fit and plot vertical lines + text
+for start, end, peak_defs in regions:
+    mask = (x_proc_full >= start) & (x_proc_full <= end)
+    x_crop = x_proc_full[mask]
+    y_crop = y_proc_full[mask]
+
+    init, lb, ub = [], [], []
+    for shape, amp, cen, wid in peak_defs:
+        init += [amp, cen, wid]
+        lb += [0, cen - 30, 1]
+        ub += [2*amp, cen + 30, 100]
+    init += [0.0]
+    lb += [-1e-6]
+    ub += [1e-6]
+
+    def model(x, *params):
+        y = np.zeros_like(x)
+        for i, (shape, _, _, _) in enumerate(peak_defs):
+            amp, cen, wid = params[3*i:3*i+3]
+            if shape == "gauss":
+                y += gaussian(x, amp, cen, wid)
+            elif shape == "lorentz":
+                y += lorentzian(x, amp, cen, wid)
+            elif shape == "pvoigt":
+                y += pseudo_voigt(x, amp, cen, wid)
+        return y + params[-1]
+
+    popt, _ = curve_fit(model, x_crop, y_crop, p0=init, bounds=(lb, ub), maxfev=100000)
+
+    for i in range(len(peak_defs)):
+        _, cen, _ = popt[3*i:3*i+3]
+        y_offset = max(y_proc_full) * (0.05 if label_count % 2 == 0 else 0.1)
+        plt.axvline(x=cen, color='gray', linestyle='--', linewidth=1)
+        plt.text(cen, y_offset, f"{cen:.1f}",
+                 rotation=0, ha='center', va='bottom',
+                 fontsize=9, color='black', fontweight='bold')
+        label_count += 1
+
+plt.xlabel("Raman Shift")
+plt.ylabel("Intensity")
+plt.title("Fitted Peak Centers (Wavenumbers)")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+def fwhm(w): return 2.3548 * abs(w)  # for Gaussian estimate
+
+print("\nFitted Peaks (by Region):\n")
+
+for region_idx, (start, end, peak_defs) in enumerate(regions):
+    print(f"--- Region {region_idx + 1}: {start}–{end} cm⁻¹ ---")
+
+    # Mask and prepare
+    mask = (x_proc_full >= start) & (x_proc_full <= end)
+    x_crop = x_proc_full[mask]
+    y_crop = y_proc_full[mask]
+
+    # Init + bounds
+    init, lb, ub = [], [], []
+    for shape, amp, cen, wid in peak_defs:
+        init += [amp, cen, wid]
+        lb += [0, cen - 30, 1]
+        ub += [2*amp, cen + 30, 100]
+    init += [0.0]
+    lb += [-1e-6]
+    ub += [1e-6]
+
+    # Model
+    def model(x, *params):
+        y = np.zeros_like(x)
+        for i, (shape, _, _, _) in enumerate(peak_defs):
+            amp, cen, wid = params[3*i:3*i+3]
+            if shape == "gauss":
+                y += gaussian(x, amp, cen, wid)
+            elif shape == "lorentz":
+                y += lorentzian(x, amp, cen, wid)
+            elif shape == "pvoigt":
+                y += pseudo_voigt(x, amp, cen, wid)
+        return y + params[-1]
+
+    popt, _ = curve_fit(model, x_crop, y_crop, p0=init, bounds=(lb, ub), maxfev=100000)
+
+    # Print each peak
+    for i, (shape, _, _, _) in enumerate(peak_defs):
+        amp, cen, wid = popt[3*i:3*i+3]
+        if shape == "gauss":
+            fwhm_val = 2.3548 * abs(wid)
+            area = amp * wid * np.sqrt(2 * np.pi)
+        elif shape == "lorentz":
+            fwhm_val = 2 * wid
+            area = amp * np.pi * wid
+        elif shape == "pvoigt":
+            fwhm_val = 0.5346 * 2 * wid + np.sqrt(0.2166 * (2 * wid)**2 + (2.3548 * wid)**2)
+            area = amp * wid * np.sqrt(2 * np.pi)  # rough approx
+
+        print(f"Peak {i+1} ({shape}):")
+        print(f"  Center = {cen:.2f} cm⁻¹")
+        print(f"  FWHM   = {fwhm_val:.2f} cm⁻¹")
+        print(f"  Height = {amp:.3f}")
+        print(f"  Area   = {area:.3f}\n")
+
 
 # for cen in all_peak_centers:
 #     plt.axvline(cen, color="gray", linestyle="--", linewidth=1)
 #     plt.text(cen, max(y_proc_full)*0.05, f"{cen:.1f}", ha='center', va='bottom',
 #              fontsize=9, color='black', fontweight='bold')
 
-plt.xlabel("Raman Shift (cm⁻¹)")
-plt.ylabel("Intensity (a.u.)")
-plt.title("Combined Fit from Multiple Zoomed Regions")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+
 
 
 # # === Print Origin-style peak table ===
