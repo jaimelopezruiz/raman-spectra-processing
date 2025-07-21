@@ -9,28 +9,16 @@ def gaussian(x, amp, cen, wid):
 def lorentzian(x, amp, cen, wid):
     return amp * (wid**2 / ((x - cen)**2 + wid**2))
 
-def pseudo_voigt(x, amp, cen, wid, eta=0.5):
-    g = gaussian(x, amp, cen, wid)
-    l = lorentzian(x, amp, cen, wid)
-    return eta * l + (1 - eta) * g
+def true_voigt(x, amp, cen, wid):
+    sigma = wid / (2 * np.sqrt(2 * np.log(2)))
+    gamma = wid / 2
+    z = ((x - cen) + 1j * gamma) / (sigma * np.sqrt(2))
+    profile = np.real(wofz(z)) / (sigma * np.sqrt(2 * np.pi))
+    return amp * profile / np.max(profile)
 
 
 # === Regional Fitting Function ===
-def fit_peaks_regionwise(x_full, y_full, regions, center_tolerance=30, eta=0.5):
-    """
-    Perform region-by-region Raman peak fitting.
-
-    Parameters:
-        x_full, y_full: full processed spectrum arrays
-        regions: list of (start, end, peaks), where peaks = [(model, amp, center, width)]
-        center_tolerance: ± range for allowed peak center shift (default ±30 cm⁻¹)
-        eta: pseudo-Voigt mixing factor (default 0.5)
-
-    Returns:
-        y_fit_total: full fitted spectrum
-        fitted_peaks: list of (x, y) for each peak component
-        peak_params: list of dicts with model info, center, FWHM, height, area
-    """
+def fit_peaks_regionwise(x_full, y_full, regions, center_tolerance=30):
     y_fit_total = np.zeros_like(x_full)
     fitted_peaks = []
     peak_params = []
@@ -46,7 +34,7 @@ def fit_peaks_regionwise(x_full, y_full, regions, center_tolerance=30, eta=0.5):
             init += [amp, cen, wid]
             lb += [0, cen - center_tolerance, 1]
             ub += [2 * amp, cen + center_tolerance, 100]
-        init += [0.0]         # baseline offset
+        init += [0.0]  # baseline
         lb += [-1e-6]
         ub += [1e-6]
 
@@ -58,8 +46,8 @@ def fit_peaks_regionwise(x_full, y_full, regions, center_tolerance=30, eta=0.5):
                     y += gaussian(x, amp, cen, wid)
                 elif shape == "lorentz":
                     y += lorentzian(x, amp, cen, wid)
-                elif shape == "pvoigt":
-                    y += pseudo_voigt(x, amp, cen, wid, eta)
+                elif shape == "pvoigt" or shape == "voigt":
+                    y += true_voigt(x, amp, cen, wid)
             return y + params[-1]
 
         popt, _ = curve_fit(model, x_crop, y_crop, p0=init, bounds=(lb, ub), maxfev=100000)
@@ -75,10 +63,10 @@ def fit_peaks_regionwise(x_full, y_full, regions, center_tolerance=30, eta=0.5):
                 y_peak = lorentzian(x_full, amp, cen, wid)
                 fwhm = 2 * wid
                 area = amp * np.pi * wid
-            elif shape == "pvoigt":
-                y_peak = pseudo_voigt(x_full, amp, cen, wid, eta)
-                fwhm = 0.5346 * 2 * wid + np.sqrt(0.2166 * (2 * wid)**2 + (2.3548 * wid)**2)
-                area = amp * wid * np.sqrt(2 * np.pi)  # approximate
+            elif shape == "pvoigt" or shape == "voigt":
+                y_peak = true_voigt(x_full, amp, cen, wid)
+                fwhm = wid
+                area = amp
 
             fitted_peaks.append((x_full, y_peak))
             peak_params.append({
@@ -87,7 +75,7 @@ def fit_peaks_regionwise(x_full, y_full, regions, center_tolerance=30, eta=0.5):
                 "mu": cen,
                 "FWHM": fwhm,
                 "Area": area,
-                "Relative_Intensity": amp
+                "Relative_Intensity": np.max(y_peak)
             })
             peak_counter += 1
 

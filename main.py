@@ -11,9 +11,9 @@ from analysis_plotting import plot_and_report
 # === Region Definitions ===
 # Format: (start, end, [ (model, amp, center, width), ... ])
 REGIONS = [
-    (400, 650, [("pvoigt", 0.05, 420, 5),("pvoigt", 0.2, 550, 5),("pvoigt", 0.1, 590, 5)]),
-    (650, 1000, [("pvoigt", 0.05, 720, 5),("lorentz", 0.6, 770, 5), ("lorentz", 1, 790, 5), ("lorentz",0.3, 860, 2),("lorentz", 0.3, 890, 2),("lorentz", 0.3, 960, 5),("lorentz", 0.6, 975, 5),]),
-    (1300, 1700, [("lorentz", 0.4, 1400, 5), ("lorentz",0.4,1600,5)])
+    (400, 650, [("voigt", 0.05, 420, 5),("voigt", 0.2, 550, 5),("voigt", 0.1, 590, 5)]),
+    (650, 1000, [("voigt", 0.05, 720, 5),("voigt", 0.6, 770, 5), ("voigt", 1, 790, 5), ("voigt",0.3, 860, 2),("voigt", 0.3, 890, 2),("voigt", 0.3, 960, 5),("voigt", 0.6, 975, 5),]),
+    (1300, 1700, [("lorentz", 0.4, 1370, 5),("lorentz",0.4,1400,5), ("lorentz",0.4,1600,5)])
 ]
 
 # === File Input Handling ===
