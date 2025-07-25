@@ -47,7 +47,7 @@ def main():
     # === Step 1: Preprocessing ===
     x, y = preprocess(
         input_file,
-        crop_min=200,
+        crop_min=170,
         crop_max=2000,
         sg_window=11,
         sg_polyorder=10,
@@ -55,7 +55,7 @@ def main():
         imodpoly_tol=1e-3,
         imodpoly_max_iter=100,
         normalisation="vector-0to1",
-        plot=True,
+        plot=False,
         save_path=f"output/{filename}_processed.csv",
         alex_data = True
     )
@@ -72,14 +72,15 @@ def main():
     plot_and_report(
         x, y,
         y_fit_total, fitted_peaks, peak_params,
-        annotate=True,
+        annotate=False,
         stagger_labels=True,
         font_size=9,
         label_offset=0.05,
         show_components=True,
         show_text_plot=True,
         save_curve_path=f"output/{filename}_fitted_curve.csv",
-        save_params_path=f"output/{filename}_peak_parameters.csv"
+        save_params_path=f"output/{filename}_peak_parameters.csv",
+        show = True
     )
 
 if __name__ == "__main__":

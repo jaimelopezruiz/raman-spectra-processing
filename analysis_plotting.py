@@ -5,7 +5,7 @@ import textwrap
 
 
 def plot_and_report(x, y, y_fit_total, fitted_peaks, peak_params,
-                    annotate=True, stagger_labels=True,
+                    annotate=False, stagger_labels=True,
                     font_size=9, label_offset=0.05,
                     show_components=True, save_curve_path=None,
                     save_params_path=None, show=True, show_text_plot=True):
@@ -20,7 +20,7 @@ def plot_and_report(x, y, y_fit_total, fitted_peaks, peak_params,
         peak_params: list of dicts (mu, model, FWHM, Area, Relative_Intensity)
     """
 
-    # === Main plot with fitted peaks ===
+    #=== Main plot with fitted peaks ===
     plt.figure(figsize=(12, 6), dpi=120)
     plt.plot(x, y, color='black', label='Processed Data')
     plt.plot(x, y_fit_total, 'r--', label='Total Fit')
@@ -31,10 +31,10 @@ def plot_and_report(x, y, y_fit_total, fitted_peaks, peak_params,
             mu = peak_params[i]["mu"]
             plt.plot(x, y_peak, linestyle=':', label=f'Peak {i+1} ({model}, {mu:.1f})')
 
-    #if annotate:
-    #   for row in peak_params:
-    #        mu = row["mu"]
-    #        plt.axvline(mu, linestyle="--", color="gray", alpha=0.6)
+    if annotate:
+      for row in peak_params:
+           mu = row["mu"]
+           plt.axvline(mu, linestyle="--", color="gray", alpha=0.6)
 
 
     plt.xlabel("Raman Shift (cm⁻¹)")
@@ -46,7 +46,7 @@ def plot_and_report(x, y, y_fit_total, fitted_peaks, peak_params,
     if show:
         plt.show()
 
-        # === Final labeled plot with staggered wavenumber annotations ===
+        #=== Final labeled plot with staggered wavenumber annotations ===
     plt.figure(figsize=(12, 6), dpi=120)
     plt.plot(x, y, color='red', label='Processed Data')
 

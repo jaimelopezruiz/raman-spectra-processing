@@ -82,23 +82,27 @@ for i, file in enumerate(file_paths):
 
     x, y = load_processed_spectrum(file)
 
-# Filter to only include data where Raman Shift ≤ 2000 cm⁻¹
-    # mask = x <= 2000
-    # x = x[mask]
-    # y = y[mask]
-
-
     # Apply vertical offset to each curve
-    y_offset = y + (len(file_paths) - i - 1) * (np.max(y) - np.min(y)) * offset_step
+    offset_index = (len(file_paths) - i - 1)
+    y_offset = y + offset_index * offset_step
 
-
+    # Plot the spectrum
     plt.plot(x, y_offset, label=label, linewidth=1.5)
 
-# Add temperature annotation just above the curve peak
+    # ---- Labeling: Position relative to the last valid point near 3500 cm⁻¹ ----
+    anchor_x = 3800
+    anchor_index = np.argmin(np.abs(x - anchor_x))  # closest index to 3500 cm⁻¹
+    if anchor_index >= len(y_offset):
+        anchor_index = -1  # fallback
+
+    y_anchor = y_offset[anchor_index]
+    y_pos = y_anchor + 0.2  # small lift above the line
+    x_pos = x[anchor_index]
+
+    # Extract temperature string for label
     temperature = extract_temperature_label(file)
-    x_pos = 3800  # fixed position near right edge, but inside limit
-    y_pos = np.max(y_offset) - 0.8
-    plt.text(x_pos, y_pos, temperature, ha='right', fontsize=9, fontweight='bold')
+    plt.text(x_pos, y_pos, temperature, ha='left', fontsize=9, fontweight='bold')
+
 
 
 
