@@ -35,79 +35,88 @@ def fit_peaks_regionwise(x_full, y_full, regions, center_tolerance=30):
         y_crop = y_full[mask]
 
         init, lb, ub = [], [], []
+        param_counts = []
 
-    for model_type, amp, cen, wid in peak_defs:
-        if model_type == "bwf":
-            q_init = 1.0
-            init += [amp, cen, wid, q_init]
-            lb += [0, cen - center_tolerance, 1, -100]
-            ub += [2 * amp, cen + center_tolerance, 100, 100]
-        else:
-            init += [amp, cen, wid]
-            lb += [0, cen - center_tolerance, 1]
-            ub += [2 * amp, cen + center_tolerance, 100]
+        for peak_def in peak_defs:
+            model_type = peak_def[0]
 
-    init += [0.0]  # baseline
-    lb += [-1e-6]
-    ub += [1e-6]
-
-
-    def model(x, *params):
-        y = np.zeros_like(x)
-        param_offset = 0
-        for i, (shape, _, _, _) in enumerate(peak_defs):
-            if shape == "bwf":
-                amp, cen, wid, q = params[param_offset:param_offset+4]
-                y += bwf(x, amp, cen, wid, q)
-                param_offset += 4
+            if model_type == "bwf":
+                amp, cen, wid, q = peak_def[1:]
+                init += [amp, cen, wid, q]
+                lb += [0, cen - center_tolerance, 1, -100]
+                ub += [2 * amp, cen + center_tolerance, 100, 100]
+                param_counts.append(4)
             else:
-                amp, cen, wid = params[param_offset:param_offset+3]
+                amp, cen, wid = peak_def[1:]
+                init += [amp, cen, wid]
+                lb += [0, cen - center_tolerance, 1]
+                ub += [2 * amp, cen + center_tolerance, 100]
+                param_counts.append(3)
+
+        # Add baseline param
+        init += [0.0]
+        lb += [-1e-6]
+        ub += [1e-6]
+
+        def model(x, *params):
+            y = np.zeros_like(x)
+            offset = 0
+            for peak_def, count in zip(peak_defs, param_counts):
+                shape = peak_def[0]
+                if shape == "bwf":
+                    amp, cen, wid, q = params[offset:offset+4]
+                    y += bwf(x, amp, cen, wid, q)
+                else:
+                    amp, cen, wid = params[offset:offset+3]
+                    if shape == "gauss":
+                        y += gaussian(x, amp, cen, wid)
+                    elif shape == "lorentz":
+                        y += lorentzian(x, amp, cen, wid)
+                    elif shape == "pvoigt" or shape == "voigt":
+                        y += true_voigt(x, amp, cen, wid)
+                offset += count
+            return y + params[-1]
+
+        popt, _ = curve_fit(model, x_crop, y_crop, p0=init, bounds=(lb, ub), maxfev=100000)
+        y_fit_total += model(x_full, *popt)
+
+        offset = 0
+        for peak_def, count in zip(peak_defs, param_counts):
+            shape = peak_def[0]
+
+            if shape == "bwf":
+                amp, cen, wid, q = popt[offset:offset+4]
+                y_peak = bwf(x_full, amp, cen, wid, q)
+                fwhm = 2 * abs(wid)  # crude estimate
+                area = np.trapz(y_peak, x_full)
+            else:
+                amp, cen, wid = popt[offset:offset+3]
                 if shape == "gauss":
-                    y += gaussian(x, amp, cen, wid)
+                    y_peak = gaussian(x_full, amp, cen, wid)
+                    fwhm = 2.3548 * abs(wid)
+                    area = amp * wid * np.sqrt(2 * np.pi)
                 elif shape == "lorentz":
-                    y += lorentzian(x, amp, cen, wid)
+                    y_peak = lorentzian(x_full, amp, cen, wid)
+                    fwhm = 2 * wid
+                    area = amp * np.pi * wid
                 elif shape == "pvoigt" or shape == "voigt":
-                    y += true_voigt(x, amp, cen, wid)
-                param_offset += 3
-        return y + params[-1]
+                    y_peak = true_voigt(x_full, amp, cen, wid)
+                    fwhm = wid
+                    area = amp
+            offset += count
 
-
-    popt, _ = curve_fit(model, x_crop, y_crop, p0=init, bounds=(lb, ub), maxfev=100000)
-    y_fit_total += model(x_full, *popt)
-
-    for i, (shape, _, _, _) in enumerate(peak_defs):
-        if shape == "bwf":
-            offset = 4 * i
-            amp, cen, wid, q = popt[offset:offset+4]
-            y_peak = bwf(x_full, amp, cen, wid, q)
-            fwhm = 2 * abs(wid)  # crude estimate
-            area = np.trapz(y_peak, x_full)  # numerical integration
-        else:
-            offset = 3 * i if "bwf" not in [pd[0] for pd in peak_defs[:i]] else offset + 1
-            amp, cen, wid = popt[offset:offset+3]
-            if shape == "gauss":
-                y_peak = gaussian(x_full, amp, cen, wid)
-                fwhm = 2.3548 * abs(wid)
-                area = amp * wid * np.sqrt(2 * np.pi)
-            elif shape == "lorentz":
-                y_peak = lorentzian(x_full, amp, cen, wid)
-                fwhm = 2 * wid
-                area = amp * np.pi * wid
-            elif shape == "pvoigt" or shape == "voigt":
-                y_peak = true_voigt(x_full, amp, cen, wid)
-                fwhm = wid
-                area = amp
-
-        fitted_peaks.append((x_full, y_peak))
-        peak_params.append({
-            "peak": peak_counter,
-            "model": shape,
-            "mu": cen,
-            "FWHM": fwhm,
-            "Area": area,
-            "Relative_Intensity": np.max(y_peak)
-        })
-        peak_counter += 1
-
+            fitted_peaks.append((x_full, y_peak))
+            peak_params.append({
+                "peak": peak_counter,
+                "model": shape,
+                "mu": cen,
+                "FWHM": fwhm,
+                "Area": area,
+                "Relative_Intensity": np.max(y_peak)
+            })
+            peak_counter += 1
 
     return y_fit_total, fitted_peaks, peak_params
+
+
+
