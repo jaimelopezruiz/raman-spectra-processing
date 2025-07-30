@@ -11,7 +11,7 @@ from analysis_plotting import plot_and_report
 # === Region Definitions ===
 # Format: (start, end, [ (model, amp, center, width), ... ])
 REGIONS = [
-    (380, 1700, [("voigt", 0.05, 450, 5),("voigt", 0.2, 560, 5),("voigt", 0.1, 620, 5),("voigt", 0.05, 650, 5), ("voigt", 1, 800, 5), ("voigt",0.3, 870, 2),("voigt", 0.3, 890, 2),("voigt", 0.3, 960, 5),("gauss",0.4,1420,5),("bwf",0.4,1600,5,-2)]),
+    (380, 1700, [("voigt", 0.2, 430, 5),("voigt", 0.2, 530, 5),("voigt", 0.1, 585, 5),("voigt", 0.05, 651, 5), ("voigt", 1, 765, 5), ("voigt",0.3, 857, 2),("voigt", 0.3, 901, 2),("voigt", 0.3, 931, 5),("gauss",0.1,1081,5),("double_voigt",0.1,0.2,1381,20,5),("bwf",0.4,1596,5,-2)]),
     #(1000, 1700, [("gauss",0.2,1100,5),("gauss",0.4,1400,5), ("voigt",0.4,1350,5), ("voigt",0.4,1600,5)])
 ]
 
