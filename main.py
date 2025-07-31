@@ -11,10 +11,10 @@ from analysis_plotting import plot_and_report
 # === Region Definitions ===
 # Format: (start, end, [ (model, amp, center, width), ... ])
 REGIONS = [
-    (380, 1700, [("voigt", 0.2, 430, 5),("voigt", 0.2, 530, 5),("voigt", 0.1, 585, 5),("voigt", 0.05, 651, 5), ("voigt", 1, 765, 5), ("voigt",0.3, 857, 2),("voigt", 0.3, 901, 2),("voigt", 0.3, 931, 5),("gauss",0.1,1081,5),("double_voigt",0.1,0.2,1381,20,5),("bwf",0.4,1596,5,-2)]),
-    #(1000, 1700, [("gauss",0.2,1100,5),("gauss",0.4,1400,5), ("voigt",0.4,1350,5), ("voigt",0.4,1600,5)])
+    (170, 300, [("voigt",0.1,186,10),("voigt",0.1,266,10)]),
+    (380, 1100, [("voigt", 0.1, 435, 5),("voigt", 0.2, 500, 5),("voigt", 0.2, 535, 5),("voigt", 0.1, 660, 1),("voigt", 0.1, 660, 1),("lorentz", 0.4, 767, 1), ("lorentz", 0.4, 790, 1),("lorentz", 0.4, 795, 1),("gauss",0.5,770,5), ("voigt",0.3, 849, 2),("voigt", 0.3, 940, 2),("voigt", 0.3, 923, 2),("gauss", 0.3, 870, 10),("voigt", 0.3, 870, 2)]),
+    (1000, 1450, [("gauss",0.1,1085,10),("bwf",0.1,1200,30,2),("lorentz",0.1,1405,2)])
 ]
-
 # === File Input Handling ===
 def choose_file_dialog():
     root = tk.Tk()
