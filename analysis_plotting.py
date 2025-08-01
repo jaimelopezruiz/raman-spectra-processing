@@ -26,14 +26,18 @@ def plot_and_report(x, y, y_fit_total, fitted_peaks, peak_params,
     ax.plot(x, y, color='black', label='Processed Data', linewidth=1.2)
     ax.plot(x, y_fit_total, 'r--', label='Total Fit', linewidth=1.2)
 
-    if show_components:
-        for i, (_, y_peak) in enumerate(fitted_peaks):
-            model = peak_params[i]["model"]
-            mu = peak_params[i]["mu"]
-            if i < 6:  # show only top N components in legend
-                ax.plot(x, y_peak, linestyle=':', linewidth=1.0, label=f'Peak {i+1} ({model}, {mu:.1f})')
-            else:
-                ax.plot(x, y_peak, linestyle=':', linewidth=1.0)
+    
+    for _, y_peak in fitted_peaks:
+        ax.plot(x, y_peak, linestyle=':', linewidth=1.0, label="_nolegend_")
+
+    # if show_components:       # UNCOMMENT TO GET FULL LEGEND
+    #     for i, (_, y_peak) in enumerate(fitted_peaks):
+    #         model = peak_params[i]["model"]
+    #         mu = peak_params[i]["mu"]
+    #         if i < 6:  # show only top N components in legend
+    #             ax.plot(x, y_peak, linestyle=':', linewidth=1.0, label=f'Peak {i+1} ({model}, {mu:.1f})')
+    #         else:
+    #             ax.plot(x, y_peak, linestyle=':', linewidth=1.0)
 
     if annotate:
         for row in peak_params:
