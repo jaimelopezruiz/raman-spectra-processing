@@ -11,9 +11,10 @@ from analysis_plotting import plot_and_report
 # === Region Definitions ===
 # Format: (start, end, [ (model, amp, center, width), ... ])
 REGIONS = [
-    #(170, 400, [("voigt",0.1,186,10),("voigt",0.1,266,10)]),
-    (170, 1700, [("voigt",0.1,186,10),("voigt",0.1,266,10),("voigt", 0.1, 435, 5),("gauss",0.2,530,5),("voigt", 0.2, 585, 10),("lorentz", 0.2, 670, 5),("gauss",0.5,770,5), ("voigt",0.3, 849, 2),("voigt", 0.3, 940, 2),("voigt", 0.3, 923, 2),("gauss", 0.3, 870, 10),("voigt", 0.3, 870, 2),("bwf",0.5,1600,5,-2),("gauss",0.5,1080,5),("lorentz",0.1,1400,2)]),
-    #(1350, 1450, [("lorentz",0.1,1405,2)])
+    (170, 1700, [("voigt", 0.1, 186, 10), ("voigt", 0.1, 266, 10),("voigt", 0.1, 435, 5),("gauss", 0.2, 530, 5),("voigt", 0.2, 585, 10),
+                 ("voigt", 0.2, 670, 5), ("gauss", 0.5, 770, 5), 
+                 ("voigt", 0.3, 849, 2), ("gauss", 0.3, 870, 10), ("voigt", 0.3, 923, 2), ("voigt", 0.3, 940, 2),  
+                 ("bwf", 0.5, 1600, 5, -2), ("gauss", 0.5, 1080, 5), ("lorentz", 0.1, 1400, 2)]),
 ]
 # === File Input Handling ===
 def choose_file_dialog():
@@ -62,7 +63,7 @@ def main():
     # === Step 2: Region-Based Curve Fitting ===
     # Allow peaks to shift ± this many cm⁻¹ from initial guess
 
-    CENTER_SHIFT_LIMIT = 200
+    CENTER_SHIFT_LIMIT = 50
 
     y_fit_total, fitted_peaks, peak_params = fit_peaks_regionwise(x, y, REGIONS, center_tolerance=CENTER_SHIFT_LIMIT)
 
