@@ -11,8 +11,12 @@ from analysis_plotting import plot_and_report
 # === Region Definitions ===
 # Format: (start, end, [ (model, amp, center, width), ... ])
 REGIONS = [
-    (170, 300, [("voigt",0.1,186,10),("voigt",0.1,266,10)]),
-    (380, 1450, [("voigt", 0.1, 435, 5),("voigt", 0.2, 500, 5),("voigt", 0.2, 535, 5),("voigt", 0.1, 660, 1),("voigt", 0.1, 660, 1),("lorentz", 0.4, 767, 1), ("lorentz", 0.4, 790, 1),("lorentz", 0.4, 795, 1),("gauss",0.5,770,5), ("voigt",0.3, 849, 2),("voigt", 0.3, 940, 2),("voigt", 0.3, 923, 2),("gauss", 0.3, 870, 10),("voigt", 0.3, 870, 2),("bwf",0.5,1250,5,2),("gauss",0.5,1080,5),("lorentz",0.1,1405,2)]),
+    (170, 300, [("voigt", 0.1, 186, 10), ("voigt", 0.1, 266, 10)]),
+    (380, 1540, [("voigt", 0.1, 435, 5), ("voigt", 0.15, 500, 5), ("lorentz", 0.15, 520, 5), ("voigt", 0.15, 600, 5), 
+                 ("voigt", 0.15, 660, 5),
+                 ("lorentz", 0.4, 767, 1), ("lorentz", 0.4, 790, 1),("lorentz", 0.4, 795, 1),("gauss",0.5,770,5), 
+                 ("voigt",0.3, 849, 2), ("voigt", 0.3, 940, 2),("voigt", 0.3, 923, 2), ("gauss", 0.3, 870, 10), ("voigt", 0.3, 870, 2),
+                 ("gauss", 0.5, 1080, 5), ("bwf", 0.5, 1250, 5, 2), ("lorentz", 0.1, 1405, 2), ("voigt", 0.07, 1520, 2)]),
     #(1350, 1450, [("lorentz",0.1,1405,2)])
 ]
 # === File Input Handling ===
