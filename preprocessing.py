@@ -37,7 +37,7 @@ def preprocess(
     """
 
     # === Load and clean CSV ===
-    df = pd.read_csv(input_path, delim_whitespace=False, header=None)
+    df = pd.read_csv(input_path, delim_whitespace=False, header=None)   #we should use sep='\s+' instead of delim_whitespace
     # df.columns = df.columns.str.strip()
     x_col, y_col = df.columns[:2]
 

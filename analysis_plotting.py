@@ -20,28 +20,43 @@ def plot_and_report(x, y, y_fit_total, fitted_peaks, peak_params,
         peak_params: list of dicts (mu, model, FWHM, Area, Relative_Intensity)
     """
 
-    #=== Main plot with fitted peaks ===
-    plt.figure(figsize=(12, 6), dpi=120)
-    plt.plot(x, y, color='black', label='Processed Data')
-    plt.plot(x, y_fit_total, 'r--', label='Total Fit')
+        #=== Main plot with fitted peaks (cleaned + publication style) ===
+    fig, ax = plt.subplots(figsize=(8, 4.5), dpi=200)
 
-    if show_components:
-        for i, (_, y_peak) in enumerate(fitted_peaks):
-            model = peak_params[i]["model"]
-            mu = peak_params[i]["mu"]
-            plt.plot(x, y_peak, linestyle=':', label=f'Peak {i+1} ({model}, {mu:.1f})')
+    ax.plot(x, y, color='black', label='Processed Data', linewidth=1.2)
+    ax.plot(x, y_fit_total, 'r--', label='Total Fit', linewidth=1.2)
+
+    
+    for _, y_peak in fitted_peaks:
+        ax.plot(x, y_peak, linestyle=':', linewidth=1.0, label="_nolegend_")
+
+    # if show_components:       # UNCOMMENT TO GET FULL LEGEND
+    #     for i, (_, y_peak) in enumerate(fitted_peaks):
+    #         model = peak_params[i]["model"]
+    #         mu = peak_params[i]["mu"]
+    #         if i < 6:  # show only top N components in legend
+    #             ax.plot(x, y_peak, linestyle=':', linewidth=1.0, label=f'Peak {i+1} ({model}, {mu:.1f})')
+    #         else:
+    #             ax.plot(x, y_peak, linestyle=':', linewidth=1.0)
 
     if annotate:
-      for row in peak_params:
-           mu = row["mu"]
-           plt.axvline(mu, linestyle="--", color="gray", alpha=0.6)
+        for row in peak_params:
+            mu = row["mu"]
+            ax.axvline(mu, linestyle="--", color="gray", alpha=0.4, linewidth=0.8)
 
+    ax.set_xlabel("Raman shift (cm$^{-1}$)", fontsize=12)
+    ax.set_ylabel("Intensity (a.u.)", fontsize=12)
 
-    plt.xlabel("Raman Shift (cm⁻¹)")
-    plt.ylabel("Intensity")
-    plt.title("Fitted Raman Spectrum with Peak Centers")
-    plt.grid(True, linestyle="--", alpha=0.3)
-    plt.legend()
+    ax.tick_params(axis='both', labelsize=10, direction='out', length=4)
+    ax.grid(True, linestyle="--", linewidth=0.4, alpha=0.3)
+
+    ax.set_title("Raman Spectrum with Fitted Peaks", fontsize=13, weight='bold')
+    ax.legend(fontsize=9, frameon=False, loc='upper right', ncol=1)
+
+    # Remove top and right borders
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
     plt.tight_layout()
     if show:
         plt.show()
