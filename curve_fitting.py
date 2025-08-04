@@ -20,8 +20,7 @@ def bwf(x, amp, cen, wid, q):
     s = (x - cen) / wid
     return amp * ((1 + s / q) ** 2) / (1 + s**2)
 
-
-def fwhm_voigt(wid):
+def fwhm_voigt(wid):    # 'wid' is a Voigt composite width parameter, not equal to FWHM
     gamma = wid / 2
     sigma = wid / (2 * np.sqrt(2 * np.log(2)))
     fwhm_g = 2.3548 * sigma
@@ -98,14 +97,14 @@ def fit_peaks_regionwise(x_full, y_full, regions, center_tolerance=30):
             if shape == "bwf":
                 amp, cen, wid, q = popt[offset:offset+4]
                 y_peak = bwf(x_full, amp, cen, wid, q)
-                fwhm = 2 * abs(wid) * np.sqrt(1 + 1 / q**2)
+                fwhm = 2 * np.abs(wid) * np.sqrt(1 + 1 / q**2)
                 area = np.trapz(y_peak, x_full)
 
             else:
                 amp, cen, wid = popt[offset:offset+3]
                 if shape == "gauss":
                     y_peak = gaussian(x_full, amp, cen, wid)
-                    fwhm = 2.3548 * abs(wid)
+                    fwhm = 2.3548 * np.abs(wid)
                     area = amp * wid * np.sqrt(2 * np.pi)
                 elif shape == "lorentz":
                     y_peak = lorentzian(x_full, amp, cen, wid)
@@ -127,7 +126,7 @@ def fit_peaks_regionwise(x_full, y_full, regions, center_tolerance=30):
                 "Area": area,
                 "Relative_Intensity": np.max(y_peak)
             })
-            
+
             peak_counter += 1
 
     return y_fit_total, fitted_peaks, peak_params
