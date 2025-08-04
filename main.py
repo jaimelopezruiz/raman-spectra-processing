@@ -66,7 +66,7 @@ def main():
     # === Step 2: Region-Based Curve Fitting ===
     # Allow peaks to shift ± this many cm⁻¹ from initial guess
 
-    CENTER_SHIFT_LIMIT = 50
+    CENTER_SHIFT_LIMIT = 200
 
     y_fit_total, fitted_peaks, peak_params = fit_peaks_regionwise(x, y, REGIONS, center_tolerance=CENTER_SHIFT_LIMIT)
 
