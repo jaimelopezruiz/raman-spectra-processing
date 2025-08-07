@@ -37,7 +37,8 @@ def preprocess(
     """
 
     # === Load and clean CSV ===
-    df = pd.read_csv(input_path, delim_whitespace = True, header=None, skiprows=16, engine="python", encoding="latin1")   #we should use sep='\s+' instead of delim_whitespace
+    # df = pd.read_csv(input_path, delim_whitespace = True, header=None, skiprows=16, engine="python", encoding="latin1")   #For our annealing data
+    df = pd.read_csv(input_path, delim_whitespace = False, header=None)   #we should use sep='\s+' instead of delim_whitespace
     # df.columns = df.columns.str.strip()
     x_col, y_col = df.columns[:2]
     df[x_col] = pd.to_numeric(df[x_col], errors="coerce")
@@ -99,7 +100,7 @@ def preprocess(
 
     # === Plot raw vs processed ===
     if plot:
-        plt.figure(figsize=(12, 6), dpi=120)
+        plt.figure(figsize = (12, 6), dpi = 120)
         plt.subplot(1, 2, 1)
         rp.plot.spectra(raw_spectrum, title="Raw Spectrum")
         plt.xlabel("Raman Shift (cm⁻¹)")

@@ -3,26 +3,26 @@ import os
 import argparse
 import tkinter as tk
 from tkinter import filedialog
+import matplotlib.pyplot as plt
+import numpy as np
 
 from preprocessing import preprocess
 from curve_fitting import fit_peaks_regionwise
 from analysis_plotting import plot_and_report
 
-# === Region Definitions ===
+# === Region & Cropping Definitions ===
+cmin = 170
+cmax = 1800
+
 # Format: (start, end, [ (model, amp, center, width), ... ])
-REGIONS = [
-    (170, 1600, [("voigt", 0.1, 186, 10), ("voigt", 0.1, 266, 10), ("voigt", 0.1, 435, 5), 
-                 ("voigt", 0.2, 500, 5), ("voigt", 0.2, 535, 5), ("voigt", 0.1, 580, 1), 
-                 ("voigt", 0.1, 660, 1), ("lorentz", 0.4, 767, 1), ("lorentz", 0.4, 790, 1), ("lorentz", 0.4, 795, 1), ("gauss", 0.5, 770, 5), 
-                 ("voigt", 0.3, 849, 2), ("voigt", 0.3, 940, 2), ("voigt", 0.3, 923, 2), ("gauss", 0.3, 870, 10), ("voigt", 0.3, 870, 2), 
-                 ("bwf", 0.13, 1080, 10, 1), ("lorentz", 0.1, 1415, 2), ("voigt", 0.01, 1520, 2)]),
-]
+REGIONS = [(1000, 2100, [("gauss", 0.3, 1080,5), ("lorentz", 2, 1415, 50)])]
+
 # === File Input Handling ===
 def choose_file_dialog():
     root = tk.Tk()
     root.withdraw()
-    return filedialog.askopenfilename(
-        title="Select Raman CSV File",
+    return filedialog.askopenfilenames(  # ← enables multi-select
+        title="Select Raman CSV File(s)",
         filetypes=[("CSV files", "*.csv")]
     )
 
@@ -32,44 +32,92 @@ def get_input_file():
     args = parser.parse_args()
     return args.input if args.input else choose_file_dialog()
 
+# === Overlaying Multiple Spectra ===
+def overlay_multiple_spectra(file_paths, crop_min = cmin, crop_max = cmax, scale_unirradiated = True):
+
+    plt.figure(figsize=(12, 6))
+    offset_step = 1.2
+
+    for i, file in enumerate(file_paths):
+        folder = os.path.basename(os.path.dirname(file))
+        name = os.path.splitext(os.path.basename(file))[0]
+        label = f"{folder} {name}"
+
+        # Use your existing preprocessing pipeline
+        x, y = preprocess(
+            input_path=file,
+            crop_min=crop_min,
+            crop_max=crop_max,
+            sg_window=11,
+            sg_polyorder=10,
+            imodpoly_order=2,
+            imodpoly_tol=1e-3,
+            imodpoly_max_iter=100,
+            normalisation="vector-0to1",
+            plot=False,
+            save_path=None,
+            alex_data=False
+        )
+
+        if scale_unirradiated and "Unirradiated" in folder:
+            y *= 0.5
+            label += " (scaled × 0.5)"
+
+        y_offset = y + i * (np.max(y) - np.min(y)) * offset_step
+        plt.plot(x, y_offset, label=label, linewidth=1.5)
+
+    plt.xlabel("Raman Shift (cm⁻¹)")
+    plt.ylabel("Offset Intensity (a.u.)")
+    plt.title("Overlay of Preprocessed Raman Spectra")
+    plt.legend()
+    plt.grid(True, linestyle="--", alpha=0.4)
+    plt.tight_layout()
+    plt.show()
+
+
 # === Main Execution ===
 def main():
-    input_file = get_input_file()
-    if not input_file or not os.path.isfile(input_file):
+    input_files = get_input_file()
+
+    if not input_files:
+        print("[!] No file(s) selected.")
+        return
+
+    # If multiple files selected, plot overlay
+    if isinstance(input_files, (list, tuple)) and len(input_files) > 1:
+        overlay_multiple_spectra(input_files)
+        return
+
+    # === Single-file full pipeline ===
+    input_file = input_files[0] if isinstance(input_files, (list, tuple)) else input_files
+    if not os.path.isfile(input_file):
         print("[!] Invalid file selected.")
         return
 
     filename = os.path.splitext(os.path.basename(input_file))[0]
     print(f"[✓] Selected file: {filename}.csv")
 
-    # Output directory
     os.makedirs("output", exist_ok=True)
 
-    # === Step 1: Preprocessing ===
     x, y = preprocess(
         input_file,
-        crop_min=170,
-        crop_max=4000,
+        crop_min=cmin,
+        crop_max=cmax,
         sg_window=11,
         sg_polyorder=10,
-        imodpoly_order=5,
+        imodpoly_order=2,
         imodpoly_tol=1e-3,
         imodpoly_max_iter=100,
         normalisation="vector-0to1",
         plot=True,
         save_path=f"output/{filename}_processed.csv",
-        alex_data = True
+        alex_data=False
     )
-
-    # === Step 2: Region-Based Curve Fitting ===
-    # Allow peaks to shift ± this many cm⁻¹ from initial guess
 
     CENTER_SHIFT_LIMIT = 30
 
     y_fit_total, fitted_peaks, peak_params = fit_peaks_regionwise(x, y, REGIONS, center_tolerance=CENTER_SHIFT_LIMIT)
 
-
-    # === Step 3: Plot and Report ===
     plot_and_report(
         x, y,
         y_fit_total, fitted_peaks, peak_params,
@@ -81,7 +129,7 @@ def main():
         show_text_plot=True,
         save_curve_path=f"output/{filename}_fitted_curve.csv",
         save_params_path=f"output/{filename}_peak_parameters.csv",
-        show = True
+        show=True
     )
 
 if __name__ == "__main__":
