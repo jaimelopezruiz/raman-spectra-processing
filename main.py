@@ -58,7 +58,7 @@ def main():
         normalisation="vector-0to1",
         plot=True,
         save_path=f"output/{filename}_processed.csv",
-        alex_data = False
+        alex_data = True
     )
 
     # === Step 2: Region-Based Curve Fitting ===
