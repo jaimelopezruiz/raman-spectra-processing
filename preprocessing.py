@@ -37,7 +37,7 @@ def preprocess(
     """
 
     # === Load and clean CSV ===
-    df = pd.read_csv(input_path, delim_whitespace=False, header=None)   #we should use sep='\s+' instead of delim_whitespace
+    df = pd.read_csv(input_path, delim_whitespace = True, header=None, skiprows=16, engine="python", encoding="latin1")   #we should use sep='\s+' instead of delim_whitespace
     # df.columns = df.columns.str.strip()
     x_col, y_col = df.columns[:2]
 
@@ -61,8 +61,8 @@ def preprocess(
     raw_spectrum = rp.Spectrum(y_raw, x_raw)
 
     # Save raw spectrum as CSV
-    #raw_df = pd.DataFrame({'Wavenumber (cm^-1)': x_raw, 'Intensity (a.u.)': y_raw})
-    #raw_df.to_csv("output/raw_spectrum_Tofix.csv", index=False)
+    # raw_df = pd.DataFrame({'Wavenumber (cm^-1)': x_raw, 'Intensity (a.u.)': y_raw})
+    # raw_df.to_csv("output/raw_spectrum_Tofix.csv", index=False)
 
 
     # === Apply preprocessing ===

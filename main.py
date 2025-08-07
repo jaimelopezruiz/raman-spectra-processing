@@ -49,7 +49,7 @@ def main():
     x, y = preprocess(
         input_file,
         crop_min=170,
-        crop_max=2000,
+        crop_max=4000,
         sg_window=11,
         sg_polyorder=10,
         imodpoly_order=5,
