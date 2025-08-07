@@ -11,11 +11,9 @@ from analysis_plotting import plot_and_report
 # === Region Definitions ===
 # Format: (start, end, [ (model, amp, center, width), ... ])
 REGIONS = [
-    (170, 1600, [("voigt", 0.1, 186, 10), ("voigt", 0.1, 266, 10), ("voigt", 0.1, 435, 5), 
-                 ("voigt", 0.2, 500, 5), ("voigt", 0.2, 535, 5), ("voigt", 0.1, 580, 1), 
-                 ("voigt", 0.1, 660, 1), ("lorentz", 0.4, 767, 1), ("lorentz", 0.4, 790, 1), ("lorentz", 0.4, 795, 1), ("gauss", 0.5, 770, 5), 
-                 ("voigt", 0.3, 849, 2), ("voigt", 0.3, 940, 2), ("voigt", 0.3, 923, 2), ("gauss", 0.3, 870, 10), ("voigt", 0.3, 870, 2), 
-                 ("bwf", 0.13, 1080, 10, 1), ("lorentz", 0.1, 1415, 2), ("voigt", 0.01, 1520, 2)]),
+    #(170, 400, [("voigt",0.1,186,10),("voigt",0.1,266,10)]),
+    (170, 1450, [("voigt",0.1,186,10),("voigt",0.1,266,10),("voigt", 0.1, 435, 5),("voigt", 0.2, 500, 5),("voigt", 0.2, 535, 5),("voigt", 0.1, 580, 1),("voigt", 0.1, 660, 1),("lorentz", 0.4, 767, 1), ("lorentz", 0.4, 790, 1),("lorentz", 0.4, 795, 1),("gauss",0.5,770,5), ("voigt",0.3, 849, 2),("voigt", 0.3, 940, 2),("voigt", 0.3, 923, 2),("gauss", 0.3, 870, 10),("voigt", 0.3, 870, 2),("gauss",0.5,1080,5),("gauss",0.5,1200,5),("lorentz",0.1,1405,2)]),
+    #(1350, 1450, [("lorentz",0.1,1405,2)])
 ]
 # === File Input Handling ===
 def choose_file_dialog():
@@ -58,7 +56,8 @@ def main():
         normalisation="vector-0to1",
         plot=True,
         save_path=f"output/{filename}_processed.csv",
-        alex_data = True
+        alex_data = False,
+        microm = True
     )
 
     # === Step 2: Region-Based Curve Fitting ===
