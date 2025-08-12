@@ -42,7 +42,7 @@ def preprocess(
 
     # === Load and clean CSV ===
     # df = pd.read_csv(input_path, delim_whitespace = True, header=None, skiprows=16, engine="python", encoding="latin1")   #For our annealing data
-    df = pd.read_csv(input_path, delim_whitespace = True, header=None, skiprows=16, engine="python", encoding="latin1")   #we should use sep='\s+' instead of delim_whitespace
+    df = pd.read_csv(input_path, delim_whitespace = False, header=None)   #we should use sep='\s+' instead of delim_whitespace
     # df.columns = df.columns.str.strip()
     x_col, y_col = df.columns[:2]
 
@@ -62,16 +62,23 @@ def preprocess(
         excitation_nm = 532
         x_raw = wavelength_to_shift(x_raw, excitation_nm, microm)
 
-    df = df[(df[x_col] >= crop_min) & (df[x_col] <= crop_max)]
-    df = df.sort_values(by=x_col)
-
-    # Sort (again, safe in case conversion shuffled order)
+   # Sort raw arrays (after optional wavelength→shift conversion)
     sort_idx = np.argsort(x_raw)
     x_raw = x_raw[sort_idx]
     y_raw = y_raw[sort_idx]
 
+    # Apply cropping on the arrays that will actually be used
+    mask = (x_raw >= crop_min) & (x_raw <= crop_max)
+    x_use = x_raw[mask]
+    y_use = y_raw[mask]
 
-    raw_spectrum = rp.Spectrum(y_raw, x_raw)
+    if x_use.size == 0:
+        raise ValueError(
+            f"[!] No data within [{crop_min}, {crop_max}] after conversion. "
+            "Check units (cm⁻¹ vs nm) and alex_data/microm settings."
+        )
+
+    raw_spectrum = rp.Spectrum(y_use, x_use)
 
     # Save raw spectrum as CSV
     # raw_df = pd.DataFrame({'Wavenumber (cm^-1)': x_raw, 'Intensity (a.u.)': y_raw})
