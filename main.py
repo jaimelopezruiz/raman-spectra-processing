@@ -22,7 +22,7 @@ baseorder = 5
 # Format: (start, end, [ (model, amp, center, width), ... ])
 REGIONS = [
     #(170, 400, [("voigt",0.1,186,10),("voigt",0.1,266,10)]),
-    (170, 1450, [("voigt",0.1,186,10),("voigt",0.1,266,10),("voigt", 0.1, 435, 5),("voigt", 0.2, 500, 5),("voigt", 0.2, 535, 5), ("voigt", 0.1, 580, 1),("voigt", 0.1, 660, 1),("lorentz", 0.4, 767, 1), ("lorentz", 0.4, 790, 1),("lorentz", 0.4, 795, 1),("gauss",0.5,770,5), ("voigt",0.3, 849, 2),("voigt", 0.3, 940, 2),("voigt", 0.3, 923, 2),("gauss", 0.3, 870, 10),("voigt", 0.3, 870, 2),("gauss",0.5,1080,5),("gauss",0.5,1200,5),("lorentz",0.1,1405,2)]),
+    (170, 1660, [("voigt",0.1,186,10),("voigt",0.1,266,10),("voigt", 0.2, 500, 5),("voigt", 0.2, 535, 5),("voigt", 0.2, 580, 1),("voigt", 0.1, 660, 1),("gauss", 0.5, 770, 1), ("lorentz", 0.4, 789, 1),("lorentz", 0.4, 797, 1),("lorentz",0.4,766,1), ("voigt",0.3, 849, 2),("voigt", 0.3, 940, 2),("voigt", 0.3, 923, 2),("gauss", 0.3, 870, 10),("voigt", 0.3, 870, 2),("gauss",0.3,1200,20),("lorentz",0.3,1405,2),("lorentz",0.3,1580,2)]),
     #(1350, 1450, [("lorentz",0.1,1405,2)])
 ]
 
@@ -85,6 +85,8 @@ def overlay_multiple_spectra(
             save_path=None,
             alex_data=False
         )
+
+
         cropped_max = np.max(y_crop)
         ratio = cropped_max / full_max if full_max > 0 else 0.0
         ratios.append(ratio)
@@ -175,6 +177,8 @@ def main():
         alex_data=False
     )
 
+    y = y - y[0]
+
     CENTER_SHIFT_LIMIT = 200
     y_fit_total, fitted_peaks, peak_params = fit_peaks_regionwise(x, y, REGIONS, center_tolerance=CENTER_SHIFT_LIMIT)
 
@@ -195,6 +199,8 @@ def main():
         legend_ncol=1,
         legend_fontsize=6
     )
+
+
 
 if __name__ == "__main__":
     main()
