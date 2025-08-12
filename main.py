@@ -15,12 +15,17 @@ FIG_HEIGHT = 4.5   # inches
 LEGEND_OUTSIDE = True
 
 # === Region, Cropping & Baseline Definitions ===
-cmin = 1200
-cmax = 1500
-baseorder = 1
+cmin = 170
+cmax = 2000
+baseorder = 5
 
 # Format: (start, end, [ (model, amp, center, width), ... ])
-REGIONS = [(1200, 1500, [("voigt", 2, 1415, 5)])]
+REGIONS = [
+    #(170, 400, [("voigt",0.1,186,10),("voigt",0.1,266,10)]),
+    (170, 1450, [("voigt",0.1,186,10),("voigt",0.1,266,10),("voigt", 0.1, 435, 5),("voigt", 0.2, 500, 5),("voigt", 0.2, 535, 5), ("voigt", 0.1, 580, 1),("voigt", 0.1, 660, 1),("lorentz", 0.4, 767, 1), ("lorentz", 0.4, 790, 1),("lorentz", 0.4, 795, 1),("gauss",0.5,770,5), ("voigt",0.3, 849, 2),("voigt", 0.3, 940, 2),("voigt", 0.3, 923, 2),("gauss", 0.3, 870, 10),("voigt", 0.3, 870, 2),("gauss",0.5,1080,5),("gauss",0.5,1200,5),("lorentz",0.1,1405,2)]),
+    #(1350, 1450, [("lorentz",0.1,1405,2)])
+]
+
 
 # === File Input Handling ===
 def choose_file_dialog():
@@ -30,7 +35,6 @@ def choose_file_dialog():
         title="Select Raman CSV File(s)",
         filetypes=[("CSV files", "*.csv")]
     )
-
 # === Overlaying Multiple Spectra ===       # Set normalisation to none to compare real relative intensities
 def overlay_multiple_spectra(
     file_paths,
@@ -132,8 +136,6 @@ def overlay_multiple_spectra(
     plt.tight_layout()
     plt.show()
 
-
-
 # === Main Execution ===
 def main():
     input_files = choose_file_dialog()
@@ -167,13 +169,13 @@ def main():
         imodpoly_order=baseorder,
         imodpoly_tol=1e-3,
         imodpoly_max_iter=100,
-        normalisation="none",
+        normalisation="vector-0to1",
         plot=True,
         save_path=f"output/{filename}_processed.csv",
         alex_data=False
     )
 
-    CENTER_SHIFT_LIMIT = 30
+    CENTER_SHIFT_LIMIT = 200
     y_fit_total, fitted_peaks, peak_params = fit_peaks_regionwise(x, y, REGIONS, center_tolerance=CENTER_SHIFT_LIMIT)
 
     plot_and_report(
