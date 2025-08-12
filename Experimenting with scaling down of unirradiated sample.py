@@ -10,19 +10,23 @@ from ramanspy import preprocessing
 
 # === List all your input files here ===
 file_paths = [
-    "c:/Users/danie/OneDrive/Oxford 2025/03 Data/01 Unirradiated & Induction/Refel_Unirradiated/Dark Grey Focused 4.csv",
-    "c:/Users/danie/OneDrive/Oxford 2025/03 Data/02 Irradiated/Refel_Si_750_2.5/Dark Grey 5.csv",
-    
-    "c:/Users/danie/OneDrive/Oxford 2025/03 Data/02 Irradiated/Refel_Si_750_0.25/Dark Grey.csv",
-    "c:/Users/danie/OneDrive/Oxford 2025/03 Data/02 Irradiated/Refel_Si_300_2.5/Dark Grey Focused.csv",
+    r"C:\Users\jaime\OneDrive\Documents\Oxford 2025\03 Data\02 Irradiated\Refel_Si_750_0.25\Dark Grey.csv",
+    r"C:\Users\jaime\OneDrive\Documents\Oxford 2025\03 Data\02 Irradiated\Refel_Si_750_2.5\Dark Grey 5.csv",
+    r"C:\Users\jaime\OneDrive\Documents\Oxford 2025\03 Data\02 Irradiated\Refel_Si_750_0.25\Dark Grey.csv",
+    r"C:\Users\jaime\OneDrive\Documents\Oxford 2025\03 Data\02 Irradiated\Refel_Si_300_2.5\Dark Grey Focused.csv",
+    r"C:\Users\jaime\OneDrive\Documents\Oxford 2025\03 Data\02 Irradiated\Refel_Ne_300_2.5\Dark Grey Focused.csv"
 ]
 
 # === Define preprocessing pipeline ===
 pipeline = preprocessing.Pipeline([
     preprocessing.denoise.SavGol(window_length=11, polyorder=10),
-    preprocessing.baseline.IModPoly(poly_order=5),
+    preprocessing.baseline.IModPoly(poly_order=1),
     preprocessing.normalise.Vector()
 ])
+
+# === Cropping range in cm⁻¹ ===
+crop_min = 1000
+crop_max = 1800
 
 def load_and_preprocess(filepath):
     data = pd.read_csv(filepath, encoding="latin1", sep=",")
@@ -41,7 +45,11 @@ for i, file in enumerate(file_paths):
     label = f"{folder} {name}"
 
     processed = load_and_preprocess(file)
-    x, y = processed.spectral_axis, processed.spectral_data
+    x_full, y_full = processed.spectral_axis, processed.spectral_data
+
+    # Apply cropping
+    mask = (x_full >= crop_min) & (x_full <= crop_max)
+    x, y = x_full[mask], y_full[mask]
 
     # Apply 0.5 scaling if the parent folder is "Refel_Unirradiated"
     if folder == "Refel_Unirradiated":
