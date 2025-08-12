@@ -15,12 +15,12 @@ FIG_HEIGHT = 4.5   # inches
 LEGEND_OUTSIDE = True
 
 # === Region, Cropping & Baseline Definitions ===
-cmin = 200
-cmax = 1800
+cmin = 1200
+cmax = 1500
 baseorder = 1
 
 # Format: (start, end, [ (model, amp, center, width), ... ])
-REGIONS = [(1000, 2100, [("gauss", 0.3, 1080, 5), ("lorentz", 2, 1415, 50)])]
+REGIONS = [(1200, 1500, [("voigt", 2, 1415, 5)])]
 
 # === File Input Handling ===
 def choose_file_dialog():
@@ -53,13 +53,13 @@ def overlay_multiple_spectra(
         x_full, y_full = preprocess(
             input_path=file,
             crop_min=0,
-            crop_max=999999,
+            crop_max=4000,
             sg_window=11,
             sg_polyorder=10,
             imodpoly_order=baseorder,
             imodpoly_tol=1e-3,
             imodpoly_max_iter=100,
-            normalisation="none",
+            normalisation="vector-0to1",
             plot=False,
             save_path=None,
             alex_data=False
@@ -76,7 +76,7 @@ def overlay_multiple_spectra(
             imodpoly_order=baseorder,
             imodpoly_tol=1e-3,
             imodpoly_max_iter=100,
-            normalisation="none",
+            normalisation="vector-0to1",
             plot=False,
             save_path=None,
             alex_data=False
@@ -167,7 +167,7 @@ def main():
         imodpoly_order=baseorder,
         imodpoly_tol=1e-3,
         imodpoly_max_iter=100,
-        normalisation="vector-0to1",
+        normalisation="none",
         plot=True,
         save_path=f"output/{filename}_processed.csv",
         alex_data=False
