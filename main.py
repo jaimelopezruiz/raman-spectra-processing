@@ -22,7 +22,7 @@ baseorder = 5
 # Format: (start, end, [ (model, amp, center, width), ... ])
 REGIONS = [
     #(170, 400, [("voigt",0.1,186,10),("voigt",0.1,266,10)]),
-    (170, 1620, [("voigt",0.1,186,10),("voigt",0.1,246,10),("voigt",0.1,266,5),("voigt", 0.1, 435, 5),("voigt", 0.2, 500, 5),("voigt", 0.1, 660, 1),("lorentz", 0.4, 767, 1), ("lorentz", 0.4, 790, 1),("lorentz", 0.4, 795, 1),("gauss",0.5,770,5), ("voigt",0.3, 849, 2),("voigt", 0.3, 940, 2),("voigt", 0.3, 923, 2),("gauss", 0.3, 870, 10),("voigt", 0.3, 870, 2),("lorentz",0.1,1405,2),("lorentz",0.1,1605,2)]),
+    (170, 1660, [("voigt",0.4,186,10),("voigt",0.4,246,10),("voigt",0.4,266,5),("voigt", 0.1, 435, 5),("voigt", 0.2, 500, 5),("voigt", 0.2, 550, 5),("voigt", 0.1, 660, 1),("gauss",0.5,770,5), ("voigt",0.3, 849, 2),("gauss", 0.3, 870, 10),("lorentz",0.6,1355,2),("lorentz",0.6,1455,2),("lorentz",0.6,1405,2)]),
     #(1350, 1450, [("lorentz",0.1,1405,2)])
 ]
 # === File Input Handling ===
@@ -175,9 +175,9 @@ def main():
         alex_data=True
     )
 
-    #y = y - y[71] 
+    y = y - 0.18
 
-    CENTER_SHIFT_LIMIT = 200
+    CENTER_SHIFT_LIMIT = 100
     y_fit_total, fitted_peaks, peak_params = fit_peaks_regionwise(x, y, REGIONS, center_tolerance=CENTER_SHIFT_LIMIT)
 
     plot_and_report(
