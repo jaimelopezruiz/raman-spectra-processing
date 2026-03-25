@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -v ^d.*.)",
+      "Bash(find /c/Users/jaime/OneDrive/Documents/Git/raman-spectra-processing -maxdepth 2 -type f \\\\\\(-name .gitignore -o -name *.txt -o -name *.md -o -name *.cfg -o -name *.ini -o -name *.json -o -name *.yaml -o -name *.yml \\\\\\))",
+      "Bash(grep -h \"^import\\\\|^from\" /c/Users/jaime/OneDrive/Documents/Git/raman-spectra-processing/*.py)",
+      "Bash(python -c \":*)",
+      "Bash(pip list:*)",
+      "Bash(head -5 input/*.csv)"
+    ]
+  }
+}

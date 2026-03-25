@@ -1,7 +1,5 @@
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import textwrap
 
 # === Shared publication-style helpers ===
 PUB_FIGSIZE = (8, 4.5)
@@ -44,7 +42,8 @@ def plot_and_report(
       - legend_fontsize: legend text size
     """
     # === Main plot with fitted peaks (cleaned + publication style) ===
-    fig, ax = plt.subplots(figsize=figsize or PUB_FIGSIZE, dpi=PUB_DPI)
+    plot_figsize = figsize or PUB_FIGSIZE
+    fig, ax = plt.subplots(figsize=plot_figsize, dpi=PUB_DPI)
 
     ax.plot(x, y, color='black', label='Processed Data', linewidth=1.2)
     ax.plot(x, y_fit_total, 'r--', label='Total Fit', linewidth=1.2)
@@ -82,7 +81,7 @@ def plot_and_report(
         plt.show()
 
     # === Final labeled plot with staggered wavenumber annotations ===
-    plt.figure(figsize=(figsize or (12, 6)), dpi=120)
+    plt.figure(figsize=plot_figsize, dpi=120)
     plt.plot(x, y, color='red', label='Processed Data')
 
     for i, row in enumerate(peak_params):
@@ -136,11 +135,11 @@ def plot_and_report(
             "Fitted Intensity": y_fit_total
         })
         df_curve.to_csv(save_curve_path, index=False)
-        print(f"[✓] Fitted curve saved to: {save_curve_path}")
+        print(f"[OK] Fitted curve saved to: {save_curve_path}")
 
     if save_params_path:
         df_params = pd.DataFrame(peak_params)
         df_params = df_params[["peak", "model", "mu", "FWHM", "Area", "Relative_Intensity"]]
         df_params.columns = ["Peak", "Model", "Center (cm⁻¹)", "FWHM (cm⁻¹)", "Area", "Relative Intensity"]
         df_params.to_csv(save_params_path, index=False)
-        print(f"[✓] Fitted parameters saved to: {save_params_path}")
+        print(f"[OK] Fitted parameters saved to: {save_params_path}")

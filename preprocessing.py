@@ -14,6 +14,74 @@ def wavelength_to_shift(lambda_nm, lambda_exc_nm, microm):
         lambda_nm *= 1000
     return 1e7 / lambda_exc_nm - 1e7 / lambda_nm
 
+def _read_spectrum_table(input_path):
+    read_attempts = [
+        {"sep": ",", "header": 0},
+        {"sep": ",", "header": None},
+        {"sep": r"\s+", "header": 0, "engine": "python"},
+        {"sep": r"\s+", "header": None, "engine": "python"},
+    ]
+    known_x_names = {"#wave", "wave", "wavelength", "raman shift", "raman_shift", "wavenumber"}
+    known_y_names = {"#intensity", "intensity", "counts", "signal"}
+    best_candidate = None
+    errors = []
+
+    for options in read_attempts:
+        try:
+            df = pd.read_csv(input_path, **options)
+        except Exception as exc:
+            errors.append(f"{options}: {exc}")
+            continue
+
+        if df.empty or df.shape[1] < 2:
+            continue
+
+        columns = list(df.columns)
+        normalised_names = {str(col).strip().lower(): col for col in columns}
+
+        x_col = next((normalised_names[name] for name in known_x_names if name in normalised_names), columns[0])
+        remaining_columns = [col for col in columns if col != x_col]
+        y_col = next((normalised_names[name] for name in known_y_names if name in normalised_names and normalised_names[name] != x_col), None)
+        if y_col is None:
+            y_col = remaining_columns[0] if remaining_columns else None
+
+        if y_col is None:
+            continue
+
+        xy_df = df[[x_col, y_col]].copy()
+        xy_df[x_col] = pd.to_numeric(xy_df[x_col], errors="coerce")
+        xy_df[y_col] = pd.to_numeric(xy_df[y_col], errors="coerce")
+        xy_df = xy_df.dropna()
+
+        if best_candidate is None or len(xy_df) > len(best_candidate["data"]):
+            best_candidate = {
+                "data": xy_df,
+                "x_col": x_col,
+                "y_col": y_col,
+                "options": options,
+            }
+
+    if best_candidate is None or best_candidate["data"].empty:
+        details = "; ".join(errors) if errors else "No parse attempt produced two numeric columns."
+        raise ValueError(
+            "[!] Could not load two numeric spectrum columns from the input file. "
+            "Check whether the file is comma- or whitespace-delimited, whether it has a header row, "
+            "and whether the x-axis units are what the pipeline expects (for example Raman shift vs wavelength). "
+            f"Details: {details}"
+        )
+
+    df_xy = best_candidate["data"]
+    x_values = df_xy[best_candidate["x_col"]].to_numpy(dtype=np.float64)
+    y_values = df_xy[best_candidate["y_col"]].to_numpy(dtype=np.float64)
+
+    if x_values.size == 0 or y_values.size == 0:
+        raise ValueError(
+            "[!] The loaded spectrum is empty after parsing numeric x/y columns. "
+            "Check the input file format and confirm the x-axis units are correct."
+        )
+
+    return x_values, y_values
+
 def preprocess(
     input_path,
     crop_min=170,
@@ -26,8 +94,8 @@ def preprocess(
     normalisation="vector-0to1",
     plot=True,
     save_path=None,
-    alex_data=True,
-    microm = False
+    convert_wavelength_to_shift=True,
+    microm=False
 ):
     """
     Preprocesses a Raman spectrum with denoising, baseline removal, and normalisation.
@@ -41,24 +109,10 @@ def preprocess(
     """
 
     # === Load and clean CSV ===
-    #df = pd.read_csv(input_path, delim_whitespace = True, header=None, skiprows=16, engine="python", encoding="latin1")   #For our annealing data
-    df = pd.read_csv(input_path, delim_whitespace = True, header=None)   #we should use sep='\s+' instead of delim_whitespace
-    # df.columns = df.columns.str.strip()
-    x_col, y_col = df.columns[:2]
-
-    df[x_col] = pd.to_numeric(df[x_col], errors="coerce")
-    df[y_col] = pd.to_numeric(df[y_col], errors="coerce")
-    df = df.dropna()
-
-        # Check we are not dealing with empty csv / reading it wrong
-    if df.shape[0] == 0:
-        raise ValueError("[!] Loaded CSV is empty. Check delimiter or file format.")
-
-    x_raw = df[x_col].values
-    y_raw = df[y_col].values
+    x_raw, y_raw = _read_spectrum_table(input_path)
 
     # Optional: Convert wavelength to Raman shift
-    if alex_data:
+    if convert_wavelength_to_shift:
         excitation_nm = 532
         x_raw = wavelength_to_shift(x_raw, excitation_nm, microm)
 
@@ -75,7 +129,7 @@ def preprocess(
     if x_use.size == 0:
         raise ValueError(
             f"[!] No data within [{crop_min}, {crop_max}] after conversion. "
-            "Check units (cm⁻¹ vs nm) and alex_data/microm settings."
+            "Check units (cm^-1 vs nm) and convert_wavelength_to_shift/microm settings."
         )
 
     raw_spectrum = rp.Spectrum(y_use, x_use)
@@ -143,6 +197,6 @@ def preprocess(
             "Processed Intensity": y_proc
         })
         df_out.to_csv(save_path, index=False)
-        print(f"[✓] Processed spectrum saved to: {save_path}")
+        print(f"[OK] Processed spectrum saved to: {save_path}")
 
     return x_proc, y_proc

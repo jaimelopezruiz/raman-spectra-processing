@@ -16,6 +16,13 @@ def lorentzian(x, amp, cen, wid):
 def pseudo_voigt(x, amp, cen, wid, eta=0.5):
     return eta * lorentzian(x, amp, cen, wid) + (1 - eta) * gaussian(x, amp, cen, wid)
 
+def true_voigt(x, amp, cen, wid):
+    sigma = wid / (2 * np.sqrt(2 * np.log(2)))
+    gamma = wid / 2
+    z = ((x - cen) + 1j * gamma) / (sigma * np.sqrt(2))
+    profile = np.real(wofz(z)) / (sigma * np.sqrt(2 * np.pi))
+    return amp * profile / np.max(profile)
+
 # === GUI Folder Selection ===
 def select_folder():
     root = tk.Tk()
@@ -59,8 +66,13 @@ def reconstruct_peaks(x, df_params, eta=0.5):
             wid = row['FWHM'] / 2.3548
         elif model == 'lorentz':
             wid = row['FWHM'] / 2
-        elif model == 'pvoigt':
+        elif model in {'pvoigt', 'voigt'}:
             wid = row['FWHM'] / (0.5346 * 2 + np.sqrt(0.2166 * (2) ** 2 + 2.3548 ** 2))
+        elif model == 'bwf':
+            raise ValueError(
+                "Cannot reconstruct 'bwf' peaks from the saved peak-parameter CSV alone because "
+                "the asymmetry parameter q is not stored."
+            )
         else:
             raise ValueError(f"Unknown model type: {model}")
 
@@ -70,6 +82,8 @@ def reconstruct_peaks(x, df_params, eta=0.5):
             y = lorentzian(x, amp, mu, wid)
         elif model == 'pvoigt':
             y = pseudo_voigt(x, amp, mu, wid, eta)
+        elif model == 'voigt':
+            y = true_voigt(x, amp, mu, wid)
 
         peak_curves.append((x, y))
     return peak_curves

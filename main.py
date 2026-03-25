@@ -9,15 +9,19 @@ from preprocessing import preprocess
 from curve_fitting import fit_peaks_regionwise
 from analysis_plotting import plot_and_report, apply_pub_style, PUB_FIGSIZE, PUB_DPI
 
-# === Size & Legend COnfig ===
+# === Figure and display config ===
 FIG_WIDTH = 6      # inches
 FIG_HEIGHT = 4.5   # inches
 LEGEND_OUTSIDE = True
 
-# === Region, Cropping & Baseline Definitions ===
-cmin = 170
-cmax = 2000
-baseorder = 5
+# === Input-axis conversion ===
+# Enable this only for datasets whose x-axis is wavelength and needs converting to Raman shift.
+CONVERT_WAVELENGTH_TO_SHIFT = False
+
+# === Region, cropping, and baseline definitions ===
+CROP_MIN = 170
+CROP_MAX = 2000
+BASELINE_ORDER = 5
 
 # Format: (start, end, [ (model, amp, center, width), ... ])
 REGIONS = [
@@ -36,7 +40,7 @@ def choose_file_dialog():
 # === Overlaying Multiple Spectra ===       # Set normalisation to none to compare real relative intensities
 def overlay_multiple_spectra(
     file_paths,
-    crop_min=cmin, crop_max=cmax,
+    crop_min=CROP_MIN, crop_max=CROP_MAX,
     scale_unirradiated=False,     # irrelevant with this method, but keep arg for compatibility
     figsize=None, legend_outside=True
 ):
@@ -58,13 +62,13 @@ def overlay_multiple_spectra(
             crop_max=4000,
             sg_window=11,
             sg_polyorder=10,
-            imodpoly_order=baseorder,
+            imodpoly_order=BASELINE_ORDER,
             imodpoly_tol=1e-3,
             imodpoly_max_iter=100,
             normalisation="vector-0to1",
             plot=False,
             save_path=None,
-            alex_data=True
+            convert_wavelength_to_shift=CONVERT_WAVELENGTH_TO_SHIFT
         )
         full_max = np.max(y_full)
 
@@ -75,13 +79,13 @@ def overlay_multiple_spectra(
             crop_max=crop_max,
             sg_window=11,
             sg_polyorder=10,
-            imodpoly_order=baseorder,
+            imodpoly_order=BASELINE_ORDER,
             imodpoly_tol=1e-3,
             imodpoly_max_iter=100,
             normalisation="vector-0to1",
             plot=False,
             save_path=None,
-            alex_data=False
+            convert_wavelength_to_shift=CONVERT_WAVELENGTH_TO_SHIFT
         )
 
 
@@ -156,26 +160,24 @@ def main():
         return
 
     filename = os.path.splitext(os.path.basename(input_file))[0]
-    print(f"[✓] Selected file: {filename}.csv")
+    print(f"[OK] Selected file: {filename}.csv")
 
     os.makedirs("output", exist_ok=True)
 
     x, y = preprocess(
         input_file,
-        crop_min=cmin,
-        crop_max=cmax,
+        crop_min=CROP_MIN,
+        crop_max=CROP_MAX,
         sg_window=11,
         sg_polyorder=10,
-        imodpoly_order=baseorder,
+        imodpoly_order=BASELINE_ORDER,
         imodpoly_tol=1e-3,
         imodpoly_max_iter=100,
         normalisation="vector-0to1",
         plot=True,
         save_path=f"output/{filename}_processed.csv",
-        alex_data=True
+        convert_wavelength_to_shift=CONVERT_WAVELENGTH_TO_SHIFT
     )
-
-    y = y - 0.18
 
     CENTER_SHIFT_LIMIT = 100
     y_fit_total, fitted_peaks, peak_params = fit_peaks_regionwise(x, y, REGIONS, center_tolerance=CENTER_SHIFT_LIMIT)
