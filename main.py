@@ -5,7 +5,8 @@ from tkinter import filedialog
 import matplotlib.pyplot as plt
 import numpy as np
 
-from preprocessing import preprocess
+from tkinter import messagebox
+from preprocessing import preprocess, _read_spectrum_table
 from curve_fitting import fit_peaks_regionwise
 from analysis_plotting import plot_and_report, apply_pub_style, PUB_FIGSIZE, PUB_DPI
 
@@ -44,7 +45,7 @@ def overlay_multiple_spectra(
     file_paths,
     crop_min=CROP_MIN, crop_max=CROP_MAX,
     scale_unirradiated=False,     # irrelevant with this method, but keep arg for compatibility
-    figsize=None
+    figsize=None, run_preprocessing=True, show_legend=True
 ):
     PAUL_TOL_MUTED = [
         "#CC6677", "#332288", "#DDCC77", "#117733",
@@ -63,38 +64,42 @@ def overlay_multiple_spectra(
         name = os.path.splitext(os.path.basename(file))[0]
         label = f"{folder} {name}"
 
-        # Full spectrum, smoothed/baseline-corrected, Optional normalisation
-        x_full, y_full = preprocess(
-            input_path=file,
-            crop_min=0,
-            crop_max=4000,
-            sg_window=11,
-            sg_polyorder=10,
-            imodpoly_order=BASELINE_ORDER,
-            imodpoly_tol=1e-3,
-            imodpoly_max_iter=100,
-            normalisation="vector-0to1",
-            plot=False,
-            save_path=None,
-            convert_wavelength_to_shift=CONVERT_WAVELENGTH_TO_SHIFT
-        )
-        full_max = np.max(y_full)
+        if run_preprocessing:
+            x_full, y_full = preprocess(
+                input_path=file,
+                crop_min=0,
+                crop_max=4000,
+                sg_window=11,
+                sg_polyorder=10,
+                imodpoly_order=BASELINE_ORDER,
+                imodpoly_tol=1e-3,
+                imodpoly_max_iter=100,
+                normalisation="vector-0to1",
+                plot=False,
+                save_path=None,
+                convert_wavelength_to_shift=CONVERT_WAVELENGTH_TO_SHIFT
+            )
+            full_max = np.max(y_full)
 
-        # Cropped spectrum 
-        x_crop, y_crop = preprocess(
-            input_path=file,
-            crop_min=crop_min,
-            crop_max=crop_max,
-            sg_window=11,
-            sg_polyorder=10,
-            imodpoly_order=BASELINE_ORDER,
-            imodpoly_tol=1e-3,
-            imodpoly_max_iter=100,
-            normalisation="vector-0to1",
-            plot=False,
-            save_path=None,
-            convert_wavelength_to_shift=CONVERT_WAVELENGTH_TO_SHIFT
-        )
+            x_crop, y_crop = preprocess(
+                input_path=file,
+                crop_min=crop_min,
+                crop_max=crop_max,
+                sg_window=11,
+                sg_polyorder=10,
+                imodpoly_order=BASELINE_ORDER,
+                imodpoly_tol=1e-3,
+                imodpoly_max_iter=100,
+                normalisation="vector-0to1",
+                plot=False,
+                save_path=None,
+                convert_wavelength_to_shift=CONVERT_WAVELENGTH_TO_SHIFT
+            )
+        else:
+            x_full, y_full = _read_spectrum_table(file)
+            full_max = np.max(y_full)
+            mask = (x_full >= crop_min) & (x_full <= crop_max)
+            x_crop, y_crop = x_full[mask], y_full[mask]
 
 
         cropped_max = np.max(y_crop)
@@ -133,13 +138,14 @@ def overlay_multiple_spectra(
         ylabel="Offset Intensity (a.u.)"
     )
 
-    ncol = 1 if len(legend_handles) <= 14 else 2
-    ax.legend(
-        legend_handles, legend_labels,
-        loc='upper left', bbox_to_anchor=(1.02, 1),
-        borderaxespad=0, fontsize=7, frameon=False, ncol=ncol
-    )
-    fig.subplots_adjust(right=0.72)
+    if show_legend:
+        ncol = 1 if len(legend_handles) <= 14 else 2
+        ax.legend(
+            legend_handles, legend_labels,
+            loc='upper left', bbox_to_anchor=(1.02, 1),
+            borderaxespad=0, fontsize=7, frameon=False, ncol=ncol
+        )
+        fig.subplots_adjust(right=0.72)
 
     # Lock the y-limits to full integer bands
     top_band = len(spectra)
@@ -147,6 +153,25 @@ def overlay_multiple_spectra(
 
     plt.tight_layout()
     plt.show()
+
+def ask_preprocess():
+    root = tk.Tk()
+    root.withdraw()
+    result = messagebox.askyesno(
+        "Preprocessing",
+        "Run files through the preprocessing pipeline?\n\n"
+        "Yes = denoise, baseline correction, normalise\n"
+        "No  = plot/fit raw data as-is"
+    )
+    root.destroy()
+    return result
+
+def ask_show_legend():
+    root = tk.Tk()
+    root.withdraw()
+    result = messagebox.askyesno("Legend", "Show legend on the plot?")
+    root.destroy()
+    return result
 
 # === Main Execution ===
 def main():
@@ -156,10 +181,12 @@ def main():
         print("[!] No file(s) selected.")
         return
 
+    run_preprocessing = ask_preprocess()
+    show_legend = ask_show_legend()
     figsize = (FIG_WIDTH, FIG_HEIGHT)
 
     if isinstance(input_files, (list, tuple)) and len(input_files) > 1:
-        overlay_multiple_spectra(input_files, figsize=figsize)
+        overlay_multiple_spectra(input_files, figsize=figsize, run_preprocessing=run_preprocessing, show_legend=show_legend)
         return
 
     input_file = input_files[0]
@@ -168,24 +195,27 @@ def main():
         return
 
     filename = os.path.splitext(os.path.basename(input_file))[0]
-    print(f"[OK] Selected file: {filename}.csv")
+    print(f"[OK] Selected file: {filename}")
 
     os.makedirs("output", exist_ok=True)
 
-    x, y = preprocess(
-        input_file,
-        crop_min=CROP_MIN,
-        crop_max=CROP_MAX,
-        sg_window=11,
-        sg_polyorder=10,
-        imodpoly_order=BASELINE_ORDER,
-        imodpoly_tol=1e-3,
-        imodpoly_max_iter=100,
-        normalisation="vector-0to1",
-        plot=True,
-        save_path=f"output/{filename}_processed.csv",
-        convert_wavelength_to_shift=CONVERT_WAVELENGTH_TO_SHIFT
-    )
+    if run_preprocessing:
+        x, y = preprocess(
+            input_file,
+            crop_min=CROP_MIN,
+            crop_max=CROP_MAX,
+            sg_window=11,
+            sg_polyorder=10,
+            imodpoly_order=BASELINE_ORDER,
+            imodpoly_tol=1e-3,
+            imodpoly_max_iter=100,
+            normalisation="none",
+            plot=True,
+            save_path=f"output/{filename}_processed.csv",
+            convert_wavelength_to_shift=CONVERT_WAVELENGTH_TO_SHIFT
+        )
+    else:
+        x, y = _read_spectrum_table(input_file)
 
     CENTER_SHIFT_LIMIT = 100
     y_fit_total, fitted_peaks, peak_params = fit_peaks_regionwise(x, y, REGIONS, center_tolerance=CENTER_SHIFT_LIMIT)
@@ -203,6 +233,7 @@ def main():
         save_params_path=f"output/{filename}_peak_parameters.csv",
         show=True,
         figsize=figsize,
+        show_legend=show_legend,
         legend_outside=LEGEND_OUTSIDE,
         legend_ncol=1,
         legend_fontsize=6

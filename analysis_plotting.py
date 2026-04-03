@@ -29,7 +29,7 @@ def plot_and_report(
     show_components=True, save_curve_path=None,
     save_params_path=None, show=True, show_text_plot=True,
     # NEW:
-    figsize=None, legend_outside=True, legend_ncol=1, legend_fontsize=6
+    figsize=None, show_legend=True, legend_outside=True, legend_ncol=1, legend_fontsize=6
 ):
     """
     Plot the processed spectrum with total fit and peak positions.
@@ -64,17 +64,18 @@ def plot_and_report(
                         xlabel="Raman shift (cm$^{-1}$)", ylabel="Intensity (a.u.)")
 
     # Legend placement
-    if legend_outside:
-        ax.legend(
-            loc='upper left',
-            bbox_to_anchor=(1.02, 1),
-            borderaxespad=0,
-            fontsize=legend_fontsize,
-            frameon=False,
-            ncol=legend_ncol
-        )
-    else:
-        ax.legend(loc='upper right', fontsize=legend_fontsize, frameon=False, ncol=legend_ncol)
+    if show_legend:
+        if legend_outside:
+            ax.legend(
+                loc='upper left',
+                bbox_to_anchor=(1.02, 1),
+                borderaxespad=0,
+                fontsize=legend_fontsize,
+                frameon=False,
+                ncol=legend_ncol
+            )
+        else:
+            ax.legend(loc='upper right', fontsize=legend_fontsize, frameon=False, ncol=legend_ncol)
 
     plt.tight_layout()
     if show:
