@@ -2,3 +2,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+.venv/
+
+# Microscope images acquired alongside the spectra: kept locally, not in git
+# (see README "Input data"). Spectra (.csv/.txt) and params/*.xlsx ARE tracked.
+input/**/*.czi
+input/**/*.bmp
+input/**/*.png

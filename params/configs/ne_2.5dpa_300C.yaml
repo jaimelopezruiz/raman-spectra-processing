@@ -1,0 +1,41 @@
+# Final fitting config for Ne-irradiated SiC, 2.5 dpa at 300 °C.
+# Extracted from params/Regions.txt entry "Ne = 2.5dpa, 300C - Perfect";
+# earlier iterations ("close", step 2-4 save states) remain in
+# archive/Regions.txt and git history.
+sample: "Ne 2.5 dpa 300C"
+# Case-insensitive regexes tested against the input file path for config auto-detection
+# (matches e.g. "0 Ne 300 2.5.csv"; annealing files outrank this via priority)
+match: ['ne[ _-]300[ _-]2[.,]5']
+material: "Reaction-bonded (REFEL) silicon carbide"
+irradiation: "Ne ions, 2.5 dpa, 300 C"
+references: >-
+  Peak assignments follow Table 1 of the accompanying report, after
+  Sorieul et al., Chaâbane et al. and Gorban et al. (report refs [26-28]).
+
+preprocessing:
+  crop_min: 170
+  crop_max: 2000
+  baseline_order: 5
+  normalisation: vector-0to1
+
+fitting:
+  center_tolerance: 100
+
+regions:
+  - range: [170, 1700]
+    peaks:
+      - {model: voigt, amp: 0.1, center: 186, width: 10, assignment: "Si-Si TA 180-209"}
+      - {model: voigt, amp: 0.1, center: 266, width: 10, assignment: "Si-Si LA+LO ~260"}
+      - {model: voigt, amp: 0.1, center: 435, width: 5, assignment: "unassigned — verify against report"}
+      - {model: gauss, amp: 0.2, center: 530, width: 5, assignment: "Si-Si TO ~500-540"}
+      - {model: voigt, amp: 0.2, center: 585, width: 10, assignment: "Si-C distorted bands 580-600"}
+      - {model: voigt, amp: 0.2, center: 670, width: 5, assignment: "unassigned — verify against report"}
+      - {model: gauss, amp: 0.5, center: 770, width: 5, assignment: "Si-C highly disordered 760-770 (broad)"}
+      - {model: voigt, amp: 0.3, center: 849, width: 2, assignment: "Si-C highly disordered 840-870"}
+      - {model: gauss, amp: 0.3, center: 870, width: 10, assignment: "Si-C highly disordered 840-870 (broad)"}
+      - {model: voigt, amp: 0.3, center: 923, width: 2, assignment: "Si-C slightly disordered 915-950"}
+      - {model: voigt, amp: 0.3, center: 940, width: 2, assignment: "Si-C slightly disordered 915-950"}
+      - {model: gauss, amp: 0.5, center: 1080, width: 5, assignment: "C-C sp3 ~1070-1090"}
+      - {model: bwf, amp: 0.1, center: 1220, width: 10, q: 2, assignment: "unassigned — verify against report"}
+      - {model: lorentz, amp: 0.1, center: 1400, width: 2, assignment: "C-C D-band 1380-1420 (mixed sp2/sp3)"}
+      - {model: bwf, amp: 0.5, center: 1600, width: 5, q: -2, assignment: "C-C G-band 1560-1600 (sp2)"}

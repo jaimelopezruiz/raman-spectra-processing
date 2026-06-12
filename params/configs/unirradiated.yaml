@@ -1,0 +1,39 @@
+# Final fitting config for the unirradiated REFEL (RB-) SiC reference sample.
+# Extracted from the working notes formerly kept in params/Regions.txt
+# ("unirradiated peaks") — earlier candidate configs remain in that file's
+# git history and in archive/Regions.txt.
+sample: "Unirradiated REFEL SiC"
+# Case-insensitive regexes tested against the input file path for config auto-detection
+match: ["unirradiated"]
+material: "Reaction-bonded (REFEL) silicon carbide"
+irradiation: "none (reference)"
+references: >-
+  Peak assignments follow Table 1 of the accompanying report, after
+  Sorieul et al., Chaâbane et al. and Gorban et al. (report refs [26-28]).
+
+preprocessing:
+  crop_min: 170
+  crop_max: 2000
+  baseline_order: 5
+  normalisation: vector-0to1
+
+fitting:
+  center_tolerance: 100
+
+regions:
+  - range: [450, 550]
+    peaks:
+      - {model: lorentz, amp: 0.2, center: 520, width: 2, assignment: "Si-Si ~520 crystalline Si (RB-SiC only)"}
+  - range: [560, 580]
+    peaks:
+      - {model: lorentz, amp: 0.05, center: 570, width: 1, assignment: "unassigned — verify against report"}
+  - range: [650, 1160]
+    peaks:
+      - {model: lorentz, amp: 0.6, center: 760, width: 2, assignment: "Si-C TO 767 (1st order)"}
+      - {model: lorentz, amp: 1, center: 790, width: 2, assignment: "Si-C TO 789 (1st order)"}
+      - {model: lorentz, amp: 1, center: 795, width: 2, assignment: "Si-C TO 797 (1st order)"}
+      - {model: lorentz, amp: 0.3, center: 960, width: 2, assignment: "Si-C LO 966 (1st order)"}
+  - range: [1350, 1750]
+    peaks:
+      - {model: lorentz, amp: 0.1, center: 1500, width: 2, assignment: "Si-C TO+TO 1516-1542 (2nd order)"}
+      - {model: lorentz, amp: 0.1, center: 1700, width: 2, assignment: "Si-C LO+TO 1686-1714 (2nd order)"}

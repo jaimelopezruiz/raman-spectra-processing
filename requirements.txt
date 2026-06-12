@@ -1,5 +1,8 @@
-matplotlib
-numpy
-pandas
-ramanspy
-scipy
+# Pinned to the versions the pipeline was last verified with
+# (Python 3.14.5, Windows). Relax if installing on an older Python.
+matplotlib==3.11.0
+numpy==2.4.6
+pandas==3.0.3
+PyYAML==6.0.3
+ramanspy==0.2.10
+scipy==1.17.1

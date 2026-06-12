@@ -1,0 +1,49 @@
+# Final fitting config for Si-irradiated SiC, 2.5 dpa at 750 °C.
+# Extracted from params/Regions.txt entry "Si - 2.5dpa 750C - PERFECT";
+# earlier iterations remain in archive/Regions.txt and git history.
+sample: "Si 2.5 dpa 750C"
+# Case-insensitive regexes tested against the input file path for config auto-detection
+# (matches e.g. "4 Si 750 2.5.csv")
+match: ['si[ _-]750[ _-]2[.,]5']
+material: "Reaction-bonded (REFEL) silicon carbide"
+irradiation: "Si ions, 2.5 dpa, 750 C"
+references: >-
+  Peak assignments follow Table 1 of the accompanying report, after
+  Sorieul et al., Chaâbane et al. and Gorban et al. (report refs [26-28]).
+notes: >-
+  The two identical voigt peaks at 660 were present in the config that
+  produced the final fit and are kept verbatim for reproducibility.
+
+preprocessing:
+  crop_min: 170
+  crop_max: 2000
+  baseline_order: 5
+  normalisation: vector-0to1
+
+fitting:
+  center_tolerance: 100
+
+regions:
+  - range: [170, 300]
+    peaks:
+      - {model: voigt, amp: 0.1, center: 186, width: 10, assignment: "Si-Si TA 180-209"}
+      - {model: voigt, amp: 0.1, center: 266, width: 10, assignment: "Si-Si LA+LO ~260"}
+  - range: [380, 1450]
+    peaks:
+      - {model: voigt, amp: 0.1, center: 435, width: 5, assignment: "unassigned — verify against report"}
+      - {model: voigt, amp: 0.2, center: 500, width: 5, assignment: "Si-Si TO ~500-540"}
+      - {model: voigt, amp: 0.2, center: 535, width: 5, assignment: "Si-Si TO ~500-540"}
+      - {model: voigt, amp: 0.1, center: 660, width: 1, assignment: "unassigned — verify against report"}
+      - {model: voigt, amp: 0.1, center: 660, width: 1, assignment: "unassigned — verify against report"}
+      - {model: lorentz, amp: 0.4, center: 767, width: 1, assignment: "Si-C distorted TO 766"}
+      - {model: lorentz, amp: 0.4, center: 790, width: 1, assignment: "Si-C distorted TO 789"}
+      - {model: lorentz, amp: 0.4, center: 795, width: 1, assignment: "Si-C distorted TO 797"}
+      - {model: gauss, amp: 0.5, center: 770, width: 5, assignment: "Si-C highly disordered 760-770 (broad)"}
+      - {model: voigt, amp: 0.3, center: 849, width: 2, assignment: "Si-C highly disordered 840-870"}
+      - {model: voigt, amp: 0.3, center: 940, width: 2, assignment: "Si-C slightly disordered 915-950"}
+      - {model: voigt, amp: 0.3, center: 923, width: 2, assignment: "Si-C slightly disordered 915-950"}
+      - {model: gauss, amp: 0.3, center: 870, width: 10, assignment: "Si-C highly disordered 840-870 (broad)"}
+      - {model: voigt, amp: 0.3, center: 870, width: 2, assignment: "Si-C highly disordered 840-870"}
+      - {model: bwf, amp: 0.5, center: 1250, width: 5, q: 2, assignment: "unassigned — verify against report"}
+      - {model: gauss, amp: 0.5, center: 1080, width: 5, assignment: "C-C sp3 ~1070-1090"}
+      - {model: lorentz, amp: 0.1, center: 1405, width: 2, assignment: "C-C D-band 1380-1420 (mixed sp2/sp3)"}

@@ -6,7 +6,28 @@
       "Bash(grep -h \"^import\\\\|^from\" /c/Users/jaime/OneDrive/Documents/Git/raman-spectra-processing/*.py)",
       "Bash(python -c \":*)",
       "Bash(pip list:*)",
-      "Bash(head -5 input/*.csv)"
+      "Bash(head -5 input/*.csv)",
+      "Bash(grep -iE '\\\\.\\(czi|bmp|png|xlsx\\)$')",
+      "Bash(python -c ' *)",
+      "Bash(where python *)",
+      "Bash(py -c \"import numpy\")",
+      "Bash(grep -iE '\\\\.\\(czi|bmp|png|xlsx|jpg\\)$')",
+      "Bash(git mv *)",
+      "Bash(git rm *)",
+      "Bash(grep -zE '\\\\.\\(czi|bmp|png\\)$')",
+      "Bash(xargs -0 git rm --cached -q)",
+      "Bash(python -m venv .venv)",
+      "Bash(.venv/Scripts/python -m pip install --quiet --disable-pip-version-warning -r requirements.txt)",
+      "Bash(.venv/Scripts/python -c \"import ramanspy, scipy, yaml; print\\('imports OK'\\)\")",
+      "Bash(.venv/Scripts/python -m pip install --quiet -r requirements.txt)",
+      "Bash(.venv/Scripts/python -c \"import ramanspy, scipy, yaml, numpy, pandas, matplotlib; print\\('imports OK'\\)\")",
+      "Bash(.venv/Scripts/python -m pip install --quiet matplotlib numpy pandas ramanspy scipy PyYAML)",
+      "Bash(MPLBACKEND=Agg .venv/Scripts/python main.py \"input/Unirradiated.csv\" --config params/configs/unirradiated.yaml --no-show --save-fig output/_smoketest_unirradiated.png --output-dir output)",
+      "Bash(MPLBACKEND=Agg .venv/Scripts/python main.py \"input/Unirradiated.csv\" --config params/configs/unirradiated.yaml --no-show --save-fig output/_smoketest_unirradiated.png)",
+      "Bash(sed -i 's/normalisation: none/normalisation: vector-0to1/' params/configs/unirradiated.yaml)",
+      "Bash(MPLBACKEND=Agg .venv/Scripts/python main.py \"input/Unirradiated.csv\" --config params/configs/unirradiated.yaml --no-show)",
+      "Bash(sed -i 's/normalisation: none/normalisation: vector-0to1/' params/configs/*.yaml)",
+      "Bash(MPLBACKEND=Agg .venv/Scripts/python main.py \"input/4 Si 750 2.5.csv\" --config params/configs/si_2.5dpa_750C.yaml --no-show --save-fig output/_smoketest_si25_750.png)"
     ]
   }
 }

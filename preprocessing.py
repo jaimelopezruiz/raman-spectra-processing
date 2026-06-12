@@ -159,8 +159,8 @@ def preprocess(
     input_path,
     crop_min=170,
     crop_max=2000,
-    sg_window=11,
-    sg_polyorder=3,
+    sg_window=None,
+    sg_polyorder=None,
     imodpoly_order=5,
     imodpoly_tol=1e-3,
     imodpoly_max_iter=1000,
@@ -171,14 +171,26 @@ def preprocess(
     microm=False
 ):
     """
-    Preprocesses a Raman spectrum with denoising, baseline removal, and normalisation.
-    Returns x and y as numpy arrays.
+    Preprocesses a Raman spectrum: optional Savitzky-Golay denoising, IModPoly
+    baseline removal, and normalisation. Returns x and y as numpy arrays.
+
+    Denoising is OFF by default: fitting is performed on unsmoothed,
+    baseline-corrected data, since pre-smoothing correlates adjacent noise
+    points and biases the fit's parameter uncertainties low. Pass both
+    sg_window and sg_polyorder to enable SavGol smoothing (intended for
+    display/overlay figures only).
+
+    Note: earlier versions of this pipeline used sg_window=11, sg_polyorder=10,
+    which is mathematically the identity transform (a degree-10 polynomial
+    through 11 points interpolates exactly) — i.e. no smoothing was applied.
+    The current default makes that explicit without changing any results.
 
     Normalisation options:
         - "vector"       → L2 norm
         - "vector-0to1"  → L2 norm + rescale to [0,1]
         - "min-max"      → rescale to [0,1]
         - "max"          → divide by max(y)
+        - "none"         → no normalisation
     """
 
     # === Load and clean CSV ===
@@ -213,9 +225,13 @@ def preprocess(
 
 
     # === Apply preprocessing ===
-    denoiser = preprocessing.denoise.SavGol(window_length=sg_window, polyorder=sg_polyorder)
+    if sg_window is not None and sg_polyorder is not None:
+        denoiser = preprocessing.denoise.SavGol(window_length=sg_window, polyorder=sg_polyorder)
+        s_denoised = denoiser.apply(raw_spectrum)
+    else:
+        s_denoised = raw_spectrum
+
     baseline = preprocessing.baseline.IModPoly(poly_order=imodpoly_order, tol=imodpoly_tol, max_iter=imodpoly_max_iter)
-    s_denoised = denoiser.apply(raw_spectrum)
     s_baseline = baseline.apply(s_denoised)
 
     norm_mode = normalisation.lower()
@@ -248,15 +264,19 @@ def preprocess(
     y_proc = s_processed.spectral_data
 
     # === Plot raw vs processed ===
+    # Plotted with matplotlib directly rather than rp.plot.spectra, which calls
+    # matplotlib.cm.get_cmap (removed in matplotlib >= 3.9).
     if plot:
-        plt.figure(figsize = (12, 6), dpi = 120)
+        plt.figure(figsize=(12, 6), dpi=120)
         plt.subplot(1, 2, 1)
-        rp.plot.spectra(raw_spectrum, title="Raw Spectrum")
+        plt.plot(raw_spectrum.spectral_axis, raw_spectrum.spectral_data, linewidth=1.0)
+        plt.title("Raw Spectrum")
         plt.xlabel("Raman Shift (cm⁻¹)")
         plt.ylabel("Intensity")
 
         plt.subplot(1, 2, 2)
-        rp.plot.spectra(s_processed, title="Processed Spectrum")
+        plt.plot(x_proc, y_proc, linewidth=1.0)
+        plt.title("Processed Spectrum")
         plt.xlabel("Raman Shift (cm⁻¹)")
         plt.ylabel("Normalised Intensity")
 

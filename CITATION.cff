@@ -1,11 +1,18 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
+title: "raman-spectra-processing"
+abstract: >-
+  Physics-informed preprocessing and curve-fitting pipeline for Raman
+  spectra of ion-irradiated reaction-bonded silicon carbide.
 authors:
 - family-names: "Collins"
   given-names: "Daniel"
 - family-names: "Lopez Ruiz"
   given-names: "Jaime"
-title: "raman-spectra-processing"
-version: 2.0.1
-date-released: 2026-05-01
+  # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # TODO: add ORCID iDs
+version: 2.1.0
+date-released: 2026-06-12
+license: MIT
 url: "https://github.com/jaimelopezruiz/raman-spectra-processing"
+# TODO: archive a release on Zenodo and add the DOI here, e.g.:
+# doi: 10.5281/zenodo.XXXXXXX
