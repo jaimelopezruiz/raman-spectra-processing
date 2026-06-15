@@ -63,6 +63,35 @@ adjacent noise points and biases parameter uncertainties low. SavGol can
 still be enabled explicitly (`sg_window=`, `sg_polyorder=`) for display
 figures.
 
+### Reading the residual panel
+
+Every fit figure has a lower panel showing the residual, defined as the
+measured intensity minus the total fitted curve at each wavenumber. It is the
+part of the spectrum the model did not reproduce, re-plotted on its own scale
+so that small deviations hidden in the main panel become visible. The same
+values are stored in the `residual` column of `<name>_fitted_curve.csv`, and
+their spread is reported as the RMSE and residual variance in
+`<name>_fit_statistics.csv`.
+
+A good fit leaves residuals that scatter randomly around zero with no
+structure, at an amplitude set by the measurement noise. Coherent structure
+indicates the model is still missing something:
+
+- A sharp up-then-down wiggle under a single peak means its centre is slightly
+  off; a single bump at the apex means its height or width is off, or the line
+  shape is wrong (for example a Gaussian where a Lorentzian fits better).
+- A broad, smooth hump or dip over a region means a component is missing or
+  mismodelled there.
+- A residual that sits to one side of zero over a stretch, or grows toward a
+  region edge, points to a baseline, normalisation, or peak-tail issue rather
+  than noise.
+
+A high R² with a clearly structured residual is less trustworthy than a
+slightly lower R² with featureless noise, so it is worth checking the residual
+panel before relying on a fit. Note that intensity beyond the last fitted peak
+(and outside the fit region) is not modelled, so a gentle drift there is
+expected and is not a defect.
+
 ## Installation
 
 ```bash

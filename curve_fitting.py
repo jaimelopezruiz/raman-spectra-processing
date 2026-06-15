@@ -25,6 +25,8 @@ def fit_peaks_regionwise(x_full, y_full, regions, center_tolerance=30):
 
     Regions: [(start, end, [peak_def, ...]), ...] where each peak_def is a
     tuple (model, amp, center, width[, q]) or a dict from a sample config.
+    A dict peak may set an optional `width_max` to lower that peak's width
+    upper bound (default 100), e.g. to keep a BWF from broadening to the bound.
 
     Returns (y_fit_total, fitted_peaks, peak_params, fit_stats).
     Parameter uncertainties are 1-sigma values from the curve_fit covariance
@@ -45,17 +47,22 @@ def fit_peaks_regionwise(x_full, y_full, regions, center_tolerance=30):
         peaks = [_normalise_peak_def(pd) for pd in peak_defs]
 
         init, lb, ub = [], [], []
-        for model_type, p0, _ in peaks:
+        for (model_type, p0, _), pd in zip(peaks, peak_defs):
+            # Optional per-peak width ceiling (defaults to 100 so configs that
+            # don't set it fit identically); lets a peak be held narrow, e.g. a
+            # modest BWF that would otherwise balloon to the bound to absorb a
+            # broad neighbouring hump.
+            wmax = pd.get("width_max", 100) if isinstance(pd, dict) else 100
             if model_type == "bwf":
                 amp, cen, wid, q = p0
-                init += [amp, cen, wid, q]
+                init += [amp, cen, min(wid, wmax), q]
                 lb += [0, cen - center_tolerance, 1, -100]
-                ub += [2 * amp, cen + center_tolerance, 100, 100]
+                ub += [2 * amp, cen + center_tolerance, wmax, 100]
             else:
                 amp, cen, wid = p0
-                init += [amp, cen, wid]
+                init += [amp, cen, min(wid, wmax)]
                 lb += [0, cen - center_tolerance, 1]
-                ub += [2 * amp, cen + center_tolerance, 100]
+                ub += [2 * amp, cen + center_tolerance, wmax]
 
         def model(x, *params):
             y = np.zeros_like(x)

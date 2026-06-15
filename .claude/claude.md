@@ -55,10 +55,17 @@ preprocessing + center_tolerance. Extracted from the old tuning scratchpad
 | ne_2.5dpa_300C.yaml | "Ne = 2.5dpa, 300C - Perfect" |
 | si_2.5dpa_300C.yaml | "Si = 2.5 dpa, 300C - Perfect" (same peaks as Ne) |
 | annealing.yaml | "settings for annealing data" |
+| si_0.25dpa_300C.yaml | none in Regions.txt — authored 2026-06-15 from report Table 5 + Figure 11 |
 
-**Gap:** no config exists for Si 0.25 dpa 300C (`input/2 Si 300 0.25.csv`) —
-Regions.txt never recorded one. Auto-detect warns and falls back to
-unirradiated; Jaime to recover the real peak set (maybe in params/*.xlsx).
+**(resolved) Si 0.25 dpa 300C** (`input/2 Si 300 0.25.csv`): config now exists
+(`si_0.25dpa_300C.yaml`). Peak centres + assignments taken from report draft
+Table 5 (Si-Si/Si-C/C-C breakdown), seed amps/widths read off Figure 11.
+Auto-detects, fits at R² ≈ 0.995. The C-C sp3 ~1082 band is modelled as an
+asymmetric BWF (positive q → right tail) so it spans the broad weak 1000–1300
+hump; this stops the 1226 sp3 and 1418 D band up-shifting/pinning at the
+bounds (they now land ~1239 and ~1440, near their Table-5 centres). Earlier
+attempt with a plain gauss there left the D band pinned at ~1505; tightening
+center_tolerance only moved the pin — the BWF was the fix.
 
 **To verify (Jaime):** peaks at ~435, ~660–670, ~1200–1250 cm⁻¹ are marked
 `assignment: "unassigned — verify against report"` in the configs.
@@ -99,7 +106,8 @@ Tested in `.venv` (Python 3.14.5; pins in requirements.txt = tested versions):
 ## Last steps / TODO
 
 - [ ] Jaime: confirm "unassigned" peak assignments against the report table.
-- [ ] Jaime: recover/author si_0.25dpa_300C.yaml (no recorded peak set).
+- [x] si_0.25dpa_300C.yaml authored from report Table 5 + Figure 11 (2026-06-15);
+      C-C sp3 modelled as BWF so C-C centres sit near their table values, R²≈0.995.
 - [ ] Add ORCID iDs to CITATION.cff; archive a release on Zenodo, add DOI.
 - [ ] Methods sentence for the paper: fitted on unsmoothed baseline-corrected
       data; intensities normalized (vector-0to1) → relative units.

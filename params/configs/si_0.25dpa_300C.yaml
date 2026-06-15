@@ -1,0 +1,58 @@
+# Fitting config for Si-irradiated SiC, 0.25 dpa at 300 °C.
+# Regions.txt never recorded a peak set for this sample (input/2 Si 300 0.25.csv).
+# Authored 2026-06-15 from Table 5 ("Breakdown of physical meaning of peaks
+# assigned to Si-implanted SiC, 0.25 dpa 300 C") and Figure 11 of an earlier
+# report draft: peak centres + assignments are from the table, seed amplitudes
+# and widths are read off the figure envelope. The cited reference numbers in
+# that draft (8, 42, 43) differ from the current report numbering.
+sample: "Si 0.25 dpa 300C"
+# Case-insensitive regexes tested against the input file path for config auto-detection
+# (matches e.g. "2 Si 300 0.25.csv")
+match: ['si[ _-]300[ _-]0[.,]25']
+material: "Reaction-bonded (REFEL) silicon carbide"
+irradiation: "Si ions, 0.25 dpa, 300 C"
+references: >-
+  Peak assignments follow Table 5 of the accompanying report draft (Si-Si,
+  Si-C and C-C breakdown), after Sorieul et al., Chaâbane et al. and Gorban
+  et al.
+
+preprocessing:
+  crop_min: 170
+  crop_max: 2000
+  baseline_order: 5
+  normalisation: vector-0to1
+
+fitting:
+  center_tolerance: 100
+# The C-C sp3 band (~1082) is an asymmetric BWF (positive q -> right tail).
+# width_max:25 keeps it a modest peak (FWHM ~85) instead of ballooning to the
+# default width bound to absorb the broad 1000-1300 hump (which gave it heavy
+# tails, unlike report Fig 11). The BWF is bistable here: its width pins at the
+# cap in the good basin, but seeds far from q~0.75 / amp~0.03 can drop it into
+# degenerate minima (a needle, or q->0 blow-up), so the seed sits next to the
+# known-good solution. The 1418 D band is a Lorentzian
+# (sharper peak + heavier wings than a gauss), which matches the ~1420 peak and
+# its broad 1250-1700 shoulder better than a single broad gauss. Fit R2 ~ 0.996.
+# (width_max is an optional per-peak key; peaks without it use the usual cap.)
+# NB: with the Lorentzian carrying the wings, the minor 1226 sp3 voigt is
+# squeezed to a near-negligible needle - kept for the Table-5 assignment.
+
+regions:
+  - range: [170, 1700]
+    peaks:
+      # Si-Si
+      - {model: voigt, amp: 0.1,  center: 214, width: 10, assignment: "Si-Si cryst Si TA ~214"}
+      - {model: voigt, amp: 0.2,  center: 266, width: 10, assignment: "Si-Si LA+LO ~260 (figure shoulder)"}
+      - {model: voigt, amp: 0.05, center: 432, width: 5,  assignment: "Si-Si / Si-O ~432"}
+      - {model: gauss, amp: 0.4,  center: 534, width: 8,  assignment: "Si-Si Si TO ~534"}
+      # Si-C
+      - {model: voigt, amp: 0.2,  center: 586, width: 10, assignment: "Si-C disordered SiC ~586"}
+      - {model: voigt, amp: 0.2,  center: 660, width: 8,  assignment: "Si-C disordered SiC ~660"}
+      - {model: voigt, amp: 0.6,  center: 773, width: 8,  assignment: "Si-C highly disordered SiC ~773"}
+      - {model: voigt, amp: 0.45, center: 849, width: 5,  assignment: "Si-C highly disordered SiC ~849"}
+      - {model: voigt, amp: 0.6,  center: 885, width: 5,  assignment: "Si-C highly disordered SiC ~885"}
+      - {model: gauss, amp: 0.4,  center: 885, width: 25, assignment: "Si-C highly disordered SiC (broad envelope)"}
+      # C-C
+      - {model: bwf,   amp: 0.03, center: 1082, width: 24, q: 0.8, width_max: 25, assignment: "C-C sp3 ~1082 (asymmetric, right tail)"}
+      - {model: voigt, amp: 0.1,  center: 1226, width: 10, assignment: "C-C sp3 ~1226"}
+      - {model: lorentz, amp: 0.2, center: 1418, width: 60, assignment: "C-C sp2 D band ~1418"}
