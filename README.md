@@ -92,6 +92,58 @@ panel before relying on a fit. Note that intensity beyond the last fitted peak
 (and outside the fit region) is not modelled, so a gentle drift there is
 expected and is not a defect.
 
+### Goodness-of-fit statistics
+
+`<name>_fit_statistics.csv` holds one row per fit region (fitting is done
+region by region, so each region is scored independently). The columns are:
+
+| Column | Definition | Units |
+| --- | --- | --- |
+| `region` | the wavenumber window that was fit | cm⁻¹ |
+| `n_points` | number of data points in the window | count |
+| `n_params` | free parameters fitted in the window (3 per Gaussian/Lorentzian/Voigt, 4 per BWF) | count |
+| `R2` | `1 − SS_res / SS_tot` | dimensionless |
+| `RMSE` | `sqrt(SS_res / n_points)` | normalised intensity |
+| `residual_variance` | `SS_res / (n_points − n_params)` | normalised intensity² |
+
+where `SS_res = Σ(data − fit)²` is the summed squared residual and
+`SS_tot = Σ(data − mean(data))²` is the total variance of the data in the
+window.
+
+**R² (coefficient of determination)** is the fraction of the spectrum's
+variance the model reproduces: 1.0 is exact, 0 is no better than a flat line
+at the mean. Two properties matter for disorder-band spectra. First, R² is
+dominated by the tallest features, because they contribute most of `SS_tot`,
+so a fit can exceed 0.99 while still missing a small but real low-intensity
+band. Second, R² never decreases when peaks are added, so it does not on its
+own justify the number of components. Read it together with the residual panel
+and `n_params`.
+
+**RMSE (root-mean-square error)** is the typical size of a single residual, in
+the same units as the plotted intensity. With `vector-0to1` normalisation the
+spectrum runs 0 to 1, so an RMSE of about 0.016 means the average miss is
+roughly 1.6 percent of full scale. This is the most directly interpretable
+number: compare it to the noise amplitude visible in the baseline. An RMSE
+close to that noise means the real signal has been captured; an RMSE several
+times larger means something is mismodelled.
+
+**residual_variance** is `SS_res` divided by the degrees of freedom
+(`n_points − n_params`) rather than by `n_points`, which makes it the unbiased
+estimate of the residual variance; its square root is the standard error of
+the regression. It is not only a diagnostic. The pipeline uses it to scale the
+`curve_fit` covariance matrix, and the ± 1σ uncertainties reported for each
+centre, FWHM and area follow from that scaling. A larger residual variance
+therefore propagates into larger parameter uncertainties. Dividing by the
+degrees of freedom rather than `n_points` is what prevents a fit with many
+parameters from understating its own error.
+
+**n_points and n_params** together give the degrees of freedom. A region with
+few points relative to parameters can reach a high R² by overfitting noise,
+and its uncertainties will be correspondingly large, so the ratio is worth
+checking. A trustworthy fit combines a high R², an RMSE close to the noise
+floor, a comfortable excess of points over parameters, and a residual panel
+without large coherent structure. R² on its own is not sufficient.
+
 ## Installation
 
 ```bash
