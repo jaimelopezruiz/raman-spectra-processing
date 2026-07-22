@@ -19,6 +19,10 @@ FIG_WIDTH = 6      # inches
 FIG_HEIGHT = 4.5   # inches
 LEGEND_OUTSIDE = True
 
+# Sentinel for `--save-fig` given with no value: save the figure next to the
+# output CSVs under <output-dir> with a derived name, rather than a chosen path.
+AUTO_FIG = object()
+
 # === Input-axis conversion ===
 # Enable this only for datasets whose x-axis is wavelength and needs converting to Raman shift.
 CONVERT_WAVELENGTH_TO_SHIFT = False
@@ -47,11 +51,14 @@ def choose_file_dialog():
         filetypes=[("Spectrum files", "*.csv *.txt"), ("CSV files", "*.csv"), ("Text files", "*.txt")]
     )
 
-# === Overlaying Multiple Spectra ===       # Set normalisation to none to compare real relative intensities
+# === Overlaying Multiple Spectra ===
+# Each spectrum is vector-0to1 normalised, then rescaled by the ratio of its
+# in-window peak height to the tallest trace's, so relative cropped-band heights
+# are preserved across the stack (see the "Relative Cropped Height" title).
 def overlay_multiple_spectra(
     file_paths,
     crop_min=CROP_MIN, crop_max=CROP_MAX,
-    scale_unirradiated=False,     # irrelevant with this method, but keep arg for compatibility
+    scale_unirradiated=False,     # unused; kept so existing callers don't break
     figsize=None, run_preprocessing=True, show_legend=True, show=True,
     baseline_order=BASELINE_ORDER, save_fig_path=None
 ):
@@ -191,9 +198,100 @@ def parse_args():
     parser.add_argument("--no-legend", action="store_true", help="Hide the plot legend")
     parser.add_argument("--no-show", action="store_true",
                         help="Do not open plot windows (for scripted/CI runs)")
-    parser.add_argument("--save-fig", default=None, metavar="PATH",
-                        help="Save the main figure to PATH instead of/as well as showing it")
+    parser.add_argument("--save-fig", nargs="?", const=AUTO_FIG, default=None, metavar="PATH",
+                        help="Save the fitted-spectrum figure. Pass a PATH, or give --save-fig "
+                             "with no value to save it next to the output CSVs as <name>_fit.png "
+                             "(<output-dir>/overlay.png for an overlay).")
     return parser.parse_args()
+
+
+def write_run_metadata(path, *, input_file, config_path, cfg, run_preprocessing,
+                       normalisation, crop_min, crop_max, baseline_order,
+                       center_tolerance):
+    """Write a small JSON provenance sidecar next to the output CSVs so a fit
+    can be reproduced/cited: which input + config produced it, the key
+    preprocessing/fitting settings, and the exact package versions used."""
+    import json
+    import platform
+    import subprocess
+    from datetime import datetime, timezone
+    from importlib.metadata import version, PackageNotFoundError
+
+    def _ver(pkg):
+        try:
+            return version(pkg)
+        except PackageNotFoundError:
+            return None
+
+    def _git_commit():
+        try:
+            root = os.path.dirname(os.path.abspath(__file__))
+            out = subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"], cwd=root,
+                stderr=subprocess.DEVNULL)
+            return out.decode().strip()
+        except Exception:
+            return None
+
+    meta = {
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "input_file": os.path.abspath(input_file),
+        "config": os.path.abspath(config_path) if config_path else None,
+        "sample": cfg["meta"].get("sample"),
+        "preprocessing": {
+            "applied": run_preprocessing,
+            "normalisation": normalisation,
+            "crop_min": crop_min, "crop_max": crop_max,
+            "baseline_order": baseline_order,
+        },
+        "fitting": {"center_tolerance": center_tolerance},
+        "git_commit": _git_commit(),
+        "software": {
+            "python": platform.python_version(),
+            "numpy": _ver("numpy"), "scipy": _ver("scipy"),
+            "pandas": _ver("pandas"), "ramanspy": _ver("ramanspy"),
+            "matplotlib": _ver("matplotlib"),
+        },
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2)
+    print(f"[OK] Run metadata saved to: {path}")
+
+
+def write_derived_json(path, x, y, region_fits):
+    """Compute the report's derived quantities and write them next to the other
+    outputs, so χ is reproducible from the pipeline rather than a spreadsheet.
+
+    Primary χ is the integrated-window ratio (§2.3.3) — robust and consistent
+    with the annealing χ (see annealing_chi.py). The fit-based χ (summed peak
+    areas with covariance-aware 1σ) is retained as a cross-check."""
+    import json
+    from derived_quantities import chi_integrated, chi_default
+
+    def _safe(o):
+        if isinstance(o, dict):
+            return {k: _safe(v) for k, v in o.items()}
+        if isinstance(o, (list, tuple)):
+            return [_safe(v) for v in o]
+        if isinstance(o, np.floating):
+            o = float(o)
+        if isinstance(o, np.integer):
+            return int(o)
+        if isinstance(o, float) and not np.isfinite(o):
+            return None
+        return o
+
+    chi_i = chi_integrated(x, y)
+    chi_f = chi_default(region_fits)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"chi_integrated": _safe(chi_i),
+                   "chi_fitbased_crosscheck": _safe(chi_f)}, f, indent=2)
+
+    if np.isfinite(chi_i["chi"]):
+        print(f"[OK] chi (integrated) = {chi_i['chi']:.4f}  "
+              f"(A_D = {chi_i['A_D']:.3f}, A_TO = {chi_i['A_TO']:.3f}; "
+              f"windows D {chi_i['d_window']} / TO {chi_i['to_window']})")
+    print(f"[OK] Derived quantities saved to: {path}")
 
 
 # === Main Execution ===
@@ -213,10 +311,16 @@ def main():
             "No  = plot/fit raw data as-is"
         )
         show_legend = ask_yes_no("Legend", "Show legend on the plot?")
+        save_fig = AUTO_FIG if ask_yes_no(
+            "Save figure",
+            "Save the generated figure?\n\n"
+            "It will be written next to the output CSVs."
+        ) else None
     else:
         input_files = args.inputs
         run_preprocessing = not args.no_preprocess
         show_legend = not args.no_legend
+        save_fig = args.save_fig
 
     show = not args.no_show
     figsize = (FIG_WIDTH, FIG_HEIGHT)
@@ -246,11 +350,14 @@ def main():
         print(f"[OK] Using fitting config: {cfg['meta']['sample']} ({config_path})")
 
     if isinstance(input_files, (list, tuple)) and len(input_files) > 1:
+        if save_fig is AUTO_FIG:
+            os.makedirs(args.output_dir, exist_ok=True)
+            save_fig = os.path.join(args.output_dir, "overlay.png")
         overlay_multiple_spectra(
             input_files, crop_min=crop_min, crop_max=crop_max,
             figsize=figsize, run_preprocessing=run_preprocessing,
             show_legend=show_legend, show=show,
-            baseline_order=baseline_order, save_fig_path=args.save_fig
+            baseline_order=baseline_order, save_fig_path=save_fig
         )
         return
 
@@ -263,6 +370,16 @@ def main():
     print(f"[OK] Selected file: {filename}")
 
     os.makedirs(args.output_dir, exist_ok=True)
+    if save_fig is AUTO_FIG:
+        save_fig = os.path.join(args.output_dir, f"{filename}_fit.png")
+
+    write_run_metadata(
+        os.path.join(args.output_dir, f"{filename}_run_metadata.json"),
+        input_file=input_file, config_path=config_path, cfg=cfg,
+        run_preprocessing=run_preprocessing, normalisation=normalisation,
+        crop_min=crop_min, crop_max=crop_max, baseline_order=baseline_order,
+        center_tolerance=center_tolerance,
+    )
 
     if run_preprocessing:
         # Note: no denoising — fitting is performed on unsmoothed,
@@ -282,8 +399,12 @@ def main():
     else:
         x, y = _read_spectrum_table(input_file)
 
-    y_fit_total, fitted_peaks, peak_params, fit_stats = fit_peaks_regionwise(
+    y_fit_total, fitted_peaks, peak_params, fit_stats, region_fits = fit_peaks_regionwise(
         x, y, cfg["regions"], center_tolerance=center_tolerance
+    )
+
+    write_derived_json(
+        os.path.join(args.output_dir, f"{filename}_derived.json"), x, y, region_fits
     )
 
     plot_and_report(
@@ -299,7 +420,7 @@ def main():
         save_curve_path=os.path.join(args.output_dir, f"{filename}_fitted_curve.csv"),
         save_params_path=os.path.join(args.output_dir, f"{filename}_peak_parameters.csv"),
         save_stats_path=os.path.join(args.output_dir, f"{filename}_fit_statistics.csv"),
-        save_fig_path=args.save_fig,
+        save_fig_path=save_fig,
         show=show,
         figsize=figsize,
         show_legend=show_legend,
