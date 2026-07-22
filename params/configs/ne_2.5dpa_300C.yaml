@@ -37,5 +37,10 @@ regions:
       - {model: voigt, amp: 0.3, center: 940, width: 2, assignment: "Si-C slightly disordered 915-950"}
       - {model: gauss, amp: 0.5, center: 1080, width: 5, assignment: "C-C sp3 ~1070-1090"}
       - {model: bwf, amp: 0.1, center: 1220, width: 10, q: 2, assignment: "unassigned — verify against report"}
-      - {model: lorentz, amp: 0.1, center: 1400, width: 2, assignment: "C-C D-band 1380-1420 (mixed sp2/sp3)"}
+      # D band reseeded on 2026-07-21 review: the narrow width-2 seed railed to
+      # amp = 2xseed and width = 100, leaving A_D unconstrained (it traded area
+      # with the broad C-C neighbour -> 62.8 +/- 55). Reseed (amp 0.3, width 40)
+      # + width_max 150 un-pins it -> A_D ~79 +/- 2, R2 unchanged (0.9985). The
+      # same reseed is NOT safe for si_0.25dpa_300C (collapses its R2 to 0.48).
+      - {model: lorentz, amp: 0.3, center: 1400, width: 40, width_max: 150, assignment: "C-C D-band 1380-1420 (mixed sp2/sp3)"}
       - {model: bwf, amp: 0.5, center: 1600, width: 5, q: -2, assignment: "C-C G-band 1560-1600 (sp2)"}

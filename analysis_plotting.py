@@ -145,7 +145,17 @@ def plot_and_report(
         print(f"  FWHM   = {_fmt_pm(row['FWHM'], row.get('FWHM_err'))} cm⁻¹")
         print(f"  Height = {row['Relative_Intensity']:.3f}")
         print(f"  Area   = {_fmt_pm(row['Area'], row.get('Area_err'), decimals=3)}")
+        if row.get("flags"):
+            print(f"  ⚠ FLAG  = {row['flags']}")
         print("-" * 35)
+
+    flagged = [row for row in peak_params if row.get("flags")]
+    if flagged:
+        print(f"\n⚠ {len(flagged)} peak(s) hit a fit bound or collapsed — their "
+              "reported centre/FWHM/area are fit artefacts, not refined bands:")
+        for row in flagged:
+            label = row.get("assignment") or f"Peak {row['peak']}"
+            print(f"    Peak {row['peak']} ({label}): {row['flags']}")
 
     if fit_stats:
         print("\n--- Goodness of Fit ---\n")
@@ -206,6 +216,7 @@ def plot_and_report(
             ("wid_err", "wid 1σ"),
             ("q", "q"),
             ("q_err", "q 1σ"),
+            ("flags", "Flags"),
         ]
         present = [(key, label) for key, label in column_order if key in df_params.columns]
         df_params = df_params[[key for key, _ in present]]

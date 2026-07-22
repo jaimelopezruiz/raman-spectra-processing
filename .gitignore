@@ -5,7 +5,22 @@ __pycache__/
 .venv/
 
 # Microscope images acquired alongside the spectra: kept locally, not in git
-# (see README "Input data"). Spectra (.csv/.txt) and params/*.xlsx ARE tracked.
+# (see README "Input data"). Raw spectra (input/*.csv/.txt) and params/*.xlsx
+# ARE tracked — the input spectra are the measured source data and are NOT
+# reproducible, so they stay in the repo.
 input/**/*.czi
 input/**/*.bmp
 input/**/*.png
+
+# Generated results: every file here is reproducible from the input spectra +
+# configs via the pipeline (python main.py <file>), so it is not tracked.
+# NOTE: this means the paper's "data deposited in repo [49]" claim now rests on
+# the deposited code + configs (+ raw input spectra), not on committed result
+# CSVs. Archive a canonical results set with the tagged release if a frozen,
+# citable copy of the numbers is required (see paper-tracker.md G).
+output/
+
+Paper WIP Draft.docx
+paper-tracker.md
+Chemical Disorder Final.xlsx
+Cross Spectrum Ratios original.xlsx

@@ -16,9 +16,6 @@ Width conventions (unchanged from the original pipeline):
 import numpy as np
 from scipy.special import wofz
 
-# np.trapz was renamed to np.trapezoid in numpy 2.0
-_trapezoid = getattr(np, "trapezoid", None) or np.trapz
-
 # === Peak models ===
 def gaussian(x, amp, cen, wid):
     return amp * np.exp(-(x - cen)**2 / (2 * wid**2))
@@ -34,6 +31,11 @@ def true_voigt(x, amp, cen, wid):
     return amp * profile / np.max(profile)
 
 def pseudo_voigt(x, amp, cen, wid, eta=0.5):
+    """Linear Gaussian/Lorentzian blend. NOTE: not used by the fitting pipeline
+    — evaluate() maps both 'voigt' and 'pvoigt' to true_voigt(), so a config's
+    'pvoigt' peak is fitted (and reconstructed) as a true Voigt. Kept for
+    reference only; do not wire it into evaluate() without also updating
+    replot_from_csv.py, or fits and replots will diverge."""
     return eta * lorentzian(x, amp, cen, wid) + (1 - eta) * gaussian(x, amp, cen, wid)
 
 def bwf(x, amp, cen, wid, q):
@@ -52,6 +54,8 @@ def evaluate(model, x, params):
     if model == "lorentz":
         return lorentzian(x, *params)
     if model in ("voigt", "pvoigt"):
+        # 'pvoigt' is intentionally an alias for a true Voigt here (see
+        # pseudo_voigt docstring) so the fit and any later replot agree.
         return true_voigt(x, *params)
     if model == "bwf":
         return bwf(x, *params)
@@ -81,17 +85,49 @@ def fwhm(model, params):
     raise ValueError(f"Unknown model type: {model}")
 
 
+def _voigt_area(params):
+    """Exact area of the height-normalised true_voigt.
+
+    Because true_voigt is amp * (unit-area Voigt) / max(unit-area Voigt), its
+    integral is simply amp / max(profile) — independent of the x grid or crop
+    window. max(profile) is the profile value at the centre.
+    """
+    amp, wid = params[0], abs(params[2])
+    sigma = wid / (2 * np.sqrt(2 * np.log(2)))
+    gamma = wid / 2
+    max_profile = np.real(wofz(1j * gamma / (sigma * np.sqrt(2)))) / (sigma * np.sqrt(2 * np.pi))
+    return amp / max_profile
+
+
 def area(model, x, params):
-    """Integrated area of a named line shape (analytic where possible,
-    trapezoidal over the supplied x grid otherwise)."""
+    """Integrated area of a named line shape.
+
+    All areas are analytic and independent of the x grid / crop window, so they
+    are reproducible and comparable across models:
+      - gauss:   amp * sigma * sqrt(2*pi)
+      - lorentz: amp * pi * HWHM
+      - voigt:   amp / max(profile)  (height-normalised true Voigt)
+      - bwf:     pi * amp * |wid| * (1 - 1/q^2) — the integral of the Fano
+                 profile with its non-vanishing continuum floor (amp/q^2)
+                 removed, so an all-continuum "peak" no longer reports a large
+                 spurious area. NOTE: for |q| < 1 this is small or negative,
+                 which is a real Fano antiresonance rather than an error.
+
+    (`x` is accepted for backward-compatible signature but no longer used.)
+    """
     if model == "gauss":
         amp, _, wid = params
         return amp * wid * np.sqrt(2 * np.pi)
     if model == "lorentz":
         amp, _, wid = params
         return amp * np.pi * wid
-    if model in ("voigt", "pvoigt", "bwf"):
-        return _trapezoid(evaluate(model, x, params), x)
+    if model in ("voigt", "pvoigt"):
+        return _voigt_area(params)
+    if model == "bwf":
+        amp, _, wid, q = params
+        if q == 0:
+            return np.nan
+        return np.pi * amp * abs(wid) * (1 - 1.0 / q ** 2)
     raise ValueError(f"Unknown model type: {model}")
 
 

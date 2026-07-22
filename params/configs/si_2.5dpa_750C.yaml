@@ -11,8 +11,10 @@ references: >-
   Peak assignments follow Table 1 of the accompanying report, after
   Sorieul et al., Chaâbane et al. and Gorban et al. (report refs [26-28]).
 notes: >-
-  The two identical voigt peaks at 660 were present in the config that
-  produced the final fit and are kept verbatim for reproducibility.
+  Originally carried two identical voigt peaks at 660 cm-1 (rank-deficient:
+  two identical basis functions give a singular covariance and meaningless
+  per-peak errors). The duplicate was removed on 2026-07-21 review; one voigt
+  at 660 remains. Re-fit R2 essentially unchanged.
 
 preprocessing:
   crop_min: 170
@@ -34,7 +36,6 @@ regions:
       - {model: voigt, amp: 0.2, center: 500, width: 5, assignment: "Si-Si TO ~500-540"}
       - {model: voigt, amp: 0.2, center: 535, width: 5, assignment: "Si-Si TO ~500-540"}
       - {model: voigt, amp: 0.1, center: 660, width: 1, assignment: "unassigned — verify against report"}
-      - {model: voigt, amp: 0.1, center: 660, width: 1, assignment: "unassigned — verify against report"}
       - {model: lorentz, amp: 0.4, center: 767, width: 1, assignment: "Si-C distorted TO 766"}
       - {model: lorentz, amp: 0.4, center: 790, width: 1, assignment: "Si-C distorted TO 789"}
       - {model: lorentz, amp: 0.4, center: 795, width: 1, assignment: "Si-C distorted TO 797"}
@@ -44,6 +45,9 @@ regions:
       - {model: voigt, amp: 0.3, center: 923, width: 2, assignment: "Si-C slightly disordered 915-950"}
       - {model: gauss, amp: 0.3, center: 870, width: 10, assignment: "Si-C highly disordered 840-870 (broad)"}
       - {model: voigt, amp: 0.3, center: 870, width: 2, assignment: "Si-C highly disordered 840-870"}
-      - {model: bwf, amp: 0.5, center: 1250, width: 5, q: 2, assignment: "unassigned — verify against report"}
+      # q_min keeps the asymmetry away from the singular q=0 (where the BWF
+      # degenerates into a flat offset to the total fit); width_max keeps this
+      # broad weak band modest. See README "A note on the BWF line shape".
+      - {model: bwf, amp: 0.08, center: 1250, width: 70, q: 2, q_min: 0.5, width_max: 100, assignment: "unassigned — verify against report"}
       - {model: gauss, amp: 0.5, center: 1080, width: 5, assignment: "C-C sp3 ~1070-1090"}
       - {model: lorentz, amp: 0.1, center: 1405, width: 2, assignment: "C-C D-band 1380-1420 (mixed sp2/sp3)"}
