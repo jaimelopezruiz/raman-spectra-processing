@@ -5,14 +5,13 @@ abstract: >-
   Physics-informed preprocessing and curve-fitting pipeline for Raman
   spectra of ion-irradiated reaction-bonded silicon carbide.
 authors:
-# Author order conveys seniority in CFF (no separate co-author field): lead first.
 - family-names: "Lopez Ruiz"
   given-names: "Jaime"
   # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # TODO: add ORCID iDs
 - family-names: "Collins"
   given-names: "Daniel"
 version: 2.1.0
-date-released: 2026-06-12
+date-released: 2026-06-22
 license: MIT
 url: "https://github.com/jaimelopezruiz/raman-spectra-processing"
 # TODO: archive a release on Zenodo and add the DOI here, e.g.:
