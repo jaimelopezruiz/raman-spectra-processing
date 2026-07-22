@@ -20,8 +20,12 @@ main.py                CLI + interactive entry point
                        center/FWHM/area/amp (propagated via models.py);
                        per-region R²/RMSE/residual variance
   └─ models.py         single source of truth: gauss/lorentz/voigt/bwf line
-                       shapes, FWHM/area formulas, numeric error propagation,
-                       np.trapz→trapezoid shim for numpy 2
+                       shapes, FWHM/area formulas (all analytic; voigt =
+                       amp/max(profile), bwf = π·amp·|w|·(1−1/q²) floor-
+                       subtracted), numeric error propagation
+  └─ derived_quantities.py  report metrics from a fit with covariance-aware 1σ:
+                       chi (chem-disorder ratio) + stress/strain from FTO shift;
+                       uses region_fits (per-region popt/pcov) from curve_fitting
   └─ analysis_plotting.py  fit figure + residual panel, ± errors in console/
                        text summaries, CSV export (params incl. raw amp/wid/q)
 
@@ -88,9 +92,36 @@ center_tolerance only moved the pin — the BWF was the fix.
 4. **MIT license** (user-chosen). **params/*.xlsx stay tracked** (paper
    graph parameters extracted from them). Microscope images (.czi/.bmp/.png
    under input/) untracked but kept on disk, ignored via .gitignore.
+   **(2026-07-21)** `output/` is now git-ignored + untracked (reproducible
+   results); raw `input/*.csv` spectra stay tracked (measured source data, not
+   reproducible). Consequence: paper deposit claim [49] rests on code + configs
+   + input spectra, not committed result CSVs — see paper-tracker.md G.
 5. Width conventions unchanged from original code: gauss wid=σ, lorentz
    wid=HWHM, voigt composite (Olivero–Longbothum FWHM), bwf FWHM =
-   2|w|√(1+1/q²). Model math kept byte-identical to preserve results.
+   2|w|√(1+1/q²). Line-shape *evaluation* + FWHM kept byte-identical.
+6. **(2026-07-21, review) Area formulas for voigt/bwf changed by user
+   decision** — were trapz over the whole crop (window-dependent; a collapsed
+   BWF reported the spectrum's largest "area" from its non-vanishing amp/q²
+   floor). Now analytic + crop-independent: voigt = amp/max(profile),
+   bwf = π·amp·|w|·(1−1/q²) with the Fano floor removed (can be ≤0 for |q|<1,
+   a real antiresonance). gauss/lorentz areas unchanged. This supersedes the
+   old "byte-identical area" stance for those two models; do NOT revert.
+   Locked by tests/test_models.py. → published areas must be regenerated.
+7. **(2026-07-21, review) Fit-quality `flags` are additive diagnostics** —
+   peaks pinned at a bound / collapsed to ~0 amp are flagged in a `Flags` CSV
+   column + console (curve_fitting._bound_flags). Decision: flag only, keep all
+   peaks in the output (do not auto-drop). center_tolerance=100 deliberately
+   kept for robustness (see TODO); drift is surfaced, not clamped.
+8. **(2026-07-21) Chemical-disorder χ = direct window integration** (JLR
+   decision). Primary χ = ∫(D-window 1340–1470)/∫(TO-window 700–850) of the
+   baseline-corrected spectrum (derived_quantities.chi_integrated); annealing
+   χ-vs-T via annealing_chi.py with an I-ModPoly baseline-order systematic band.
+   Chosen because a fixed peak-fit config can't track amorphous→recovered
+   annealing spectra (mis-decomposes → χ blows up, e.g. 5.27 at 1200 °C). The
+   published χ (Chemical Disorder Final.xlsx) came from manual per-spectrum
+   fits; integration reproduces its trend. A covariance-aware fit-based χ
+   (chi_ratio/chi_default) is kept only as a cross-check. Do NOT revert χ to the
+   fixed-config fit. Methods text: χ = integrated band intensities.
 
 ## Verification status (2026-06-12)
 
@@ -111,8 +142,20 @@ Tested in `.venv` (Python 3.14.5; pins in requirements.txt = tested versions):
 - [ ] Add ORCID iDs to CITATION.cff; archive a release on Zenodo, add DOI.
 - [ ] Methods sentence for the paper: fitted on unsmoothed baseline-corrected
       data; intensities normalized (vector-0to1) → relative units.
-- [ ] Optionally regenerate output/ CSVs with the new pipeline (old tracked
-      outputs lack uncertainty/stats columns). Old Unirradiated_* outputs
-      were restored after a smoke test overwrote them.
+- [ ] **Regenerate ALL output/ CSVs** with the current pipeline — now required,
+      not optional: the 2026-07-21 area change + new `Flags` column mean the
+      tracked/untracked outputs are stale (e.g. si_2.5dpa_750C BWF area was 52.2,
+      now 12.9 floor-subtracted). Old tracked outputs also lack uncertainty/stats
+      columns. Old Unirradiated_* outputs were restored after a smoke test.
+- [ ] Paper: any Voigt/BWF *areas* already quoted must be refreshed from the
+      regenerated CSVs (Voigt areas shift ~1%; BWF areas change substantially).
+- [x] center_tolerance=100 kept for robustness (well-defined peaks converge to
+      the same place regardless of box width; wide box only bites absent/crowded
+      peaks, now caught by flags). "centre drifted N cm-1 from seed" flag added
+      2026-07-21 (curve_fitting.DRIFT_FRACTION=0.5); box left wide, drift
+      surfaced not clamped.
+- [x] si_2.5dpa_750C.yaml duplicate voigt@660 removed 2026-07-21 (was rank-
+      deficient: singular covariance, meaningless per-peak errors). One voigt
+      at 660 remains; notes: field updated. → this sample's outputs need re-gen.
 - [ ] Commit everything (working tree uncommitted as of 2026-06-12; renames
       done with git mv; images/__pycache__ untracked via git rm --cached).
