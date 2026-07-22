@@ -13,7 +13,11 @@ import matplotlib.pyplot as plt
 import tkinter as tk
 from tkinter import filedialog
 
-from models import evaluate, gaussian, lorentzian, true_voigt, pseudo_voigt
+# Reconstruction goes through the same models.evaluate() the fitter used, so a
+# replot always matches the fit. (In particular 'pvoigt' is fitted as a true
+# Voigt — see models.evaluate — so it is reconstructed the same way here; the
+# distinct pseudo_voigt() shape is deliberately not used.)
+from models import evaluate, gaussian, lorentzian, true_voigt
 
 # === GUI Folder Selection ===
 def select_folder():
@@ -47,7 +51,7 @@ def load_csv_files(folder):
     return df_processed, df_fitted, df_params
 
 # === Reconstruct Peaks ===
-def reconstruct_peaks(x, df_params, eta=0.5):
+def reconstruct_peaks(x, df_params):
     has_raw_params = {"amp", "wid"}.issubset(df_params.columns)
 
     peak_curves = []
@@ -72,12 +76,11 @@ def reconstruct_peaks(x, df_params, eta=0.5):
         elif model == 'lorentz':
             wid = row['FWHM'] / 2
             y = lorentzian(x, amp, mu, wid)
-        elif model == 'voigt':
+        elif model in ('voigt', 'pvoigt'):
+            # 'pvoigt' is fitted as a true Voigt (models.evaluate), so it is
+            # reconstructed as one here too — matching the fit path exactly.
             wid = row['FWHM'] / (0.5346 * 2 + np.sqrt(0.2166 * (2) ** 2 + 2.3548 ** 2))
             y = true_voigt(x, amp, mu, wid)
-        elif model == 'pvoigt':
-            wid = row['FWHM'] / (0.5346 * 2 + np.sqrt(0.2166 * (2) ** 2 + 2.3548 ** 2))
-            y = pseudo_voigt(x, amp, mu, wid, eta)
         elif model == 'bwf':
             raise ValueError(
                 "Cannot reconstruct 'bwf' peaks from a legacy peak-parameter CSV: the "
