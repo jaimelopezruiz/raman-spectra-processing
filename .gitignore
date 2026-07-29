@@ -27,3 +27,6 @@ Cross Spectrum Ratios original.xlsx
 # Paper-working data (this folder was renamed from "Stress Mapping/"): stress-map
 # point spectra + χ workbook, kept local, not in the public repo.
 Temporal Claude Context/
+MEETING NOTES 22_07_2026.txt
+# Manuscript drafts (all versions) stay local
+*.docx
