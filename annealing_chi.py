@@ -47,6 +47,9 @@ def temp_from_name(path):
     m = re.search(r"-\s*(\d{2,4})\s*[SE ]", b)         # "-200S", "-300E", "-400 "
     if m and 50 <= int(m.group(1)) <= 1500:
         return int(m.group(1))
+    m = re.search(r"(\d{2,4})C\b", b)                  # "... 100C anneal ..." (Au series)
+    if m and 50 <= int(m.group(1)) <= 1500:
+        return int(m.group(1))
     return None
 
 
@@ -71,6 +74,9 @@ def main():
     ap.add_argument("--d-window", type=float, nargs=2, default=list(CHI_D_WINDOW))
     ap.add_argument("--to-window", type=float, nargs=2, default=list(CHI_TO_WINDOW))
     ap.add_argument("--crop", type=float, nargs=2, default=[170, 2000])
+    ap.add_argument("--convert-wavelength", action="store_true",
+                    help="x-axis is wavelength in nm (532 nm excitation), not Raman "
+                         "shift — convert first (e.g. the Au 2.5e15 CSV exports)")
     ap.add_argument("--out", default=None, help="Write the χ-vs-T table to this CSV")
     args = ap.parse_args()
 
@@ -87,7 +93,7 @@ def main():
                     f, args.crop[0], args.crop[1], imodpoly_order=order,
                     imodpoly_tol=1e-3, imodpoly_max_iter=100,
                     normalisation="vector-0to1", plot=False, save_path=None,
-                    convert_wavelength_to_shift=False)
+                    convert_wavelength_to_shift=args.convert_wavelength)
                 chis[order] = chi_integrated(
                     x, y, tuple(args.d_window), tuple(args.to_window))["chi"]
             except Exception:
