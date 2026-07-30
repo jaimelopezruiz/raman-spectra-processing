@@ -11,7 +11,6 @@ __pycache__/
 input/**/*.czi
 input/**/*.bmp
 input/**/*.png
-
 # Generated results: every file here is reproducible from the input spectra +
 # configs via the pipeline (python main.py <file>), so it is not tracked.
 # NOTE: this means the paper's "data deposited in repo [49]" claim now rests on
@@ -19,7 +18,7 @@ input/**/*.png
 # CSVs. Archive a canonical results set with the tagged release if a frozen,
 # citable copy of the numbers is required (see paper-tracker.md G).
 output/
-
+*.docx
 Paper WIP Draft.docx
 paper-tracker.md
 Chemical Disorder Final.xlsx
@@ -27,3 +26,4 @@ Cross Spectrum Ratios original.xlsx
 # Paper-working data (this folder was renamed from "Stress Mapping/"): stress-map
 # point spectra + χ workbook, kept local, not in the public repo.
 Temporal Claude Context/
+MEETING NOTES 22_07_2026.txt
