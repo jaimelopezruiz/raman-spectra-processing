@@ -7,9 +7,10 @@ abstract: >-
 authors:
 - family-names: "Lopez Ruiz"
   given-names: "Jaime"
-  # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # TODO: add ORCID iDs
+  orcid: "https://orcid.org/0009-0000-2798-2196"
 - family-names: "Collins"
   given-names: "Daniel"
+  orcid: "https://orcid.org/0009-0005-1566-7216"
 version: 2.1.0
 date-released: 2026-06-22
 license: MIT
