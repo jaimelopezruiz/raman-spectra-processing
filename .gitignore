@@ -30,3 +30,5 @@ MEETING NOTES 22_07_2026.txt
 
 # Manuscript drafts (all versions) stay local
 *.docx
+notesondiffs.md
+zenodo-setup.md
