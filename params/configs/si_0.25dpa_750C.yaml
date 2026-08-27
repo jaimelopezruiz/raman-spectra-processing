@@ -29,7 +29,13 @@ regions:
       - {model: voigt, amp: 0.1, center: 266, width: 10, assignment: "Si-Si LA+LO ~260"}
       - {model: voigt, amp: 0.1, center: 435, width: 5, assignment: "unassigned — verify against report"}
       - {model: voigt, amp: 0.2, center: 500, width: 5, assignment: "Si-Si TO ~500-540"}
-      - {model: voigt, amp: 0.2, center: 535, width: 5, assignment: "Si-Si TO ~500-540"}
+      # Relabelled 2026-08-05 (JLR physics ruling, label only — the fit and every
+      # number are unchanged). This peak lands near 546 cm-1, well above the
+      # unstressed Si-Si TO. Read as compressed Si-Si it would need ~5-9 %
+      # volumetric compression (gamma ~ 1), which is implausible; the 545-570
+      # region instead overlaps the disorder-activated / distorted Si-C bands.
+      # See manuscript Section 4.2 and Table SM.1.
+      - {model: voigt, amp: 0.2, center: 535, width: 5, assignment: "Si-C distorted ~545-570"}
       - {model: voigt, amp: 0.1, center: 580, width: 1, assignment: "Si-C distorted bands 580-600"}
       - {model: voigt, amp: 0.1, center: 660, width: 1, assignment: "unassigned — verify against report"}
       - {model: lorentz, amp: 0.4, center: 767, width: 1, assignment: "Si-C distorted TO 766"}

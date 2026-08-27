@@ -44,7 +44,9 @@ regions:
       - {model: voigt, amp: 0.1,  center: 214, width: 10, assignment: "Si-Si cryst Si TA ~214"}
       - {model: voigt, amp: 0.2,  center: 266, width: 10, assignment: "Si-Si LA+LO ~260 (figure shoulder)"}
       - {model: voigt, amp: 0.05, center: 432, width: 5,  assignment: "Si-Si / Si-O ~432"}
-      - {model: gauss, amp: 0.4,  center: 534, width: 8,  assignment: "Si-Si Si TO ~534"}
+      # "Si-Si Si TO ~534" until 2026-08-06: a duplicated token, label only —
+      # the fit and every number are unchanged (fitted centre 536.08 cm-1).
+      - {model: gauss, amp: 0.4,  center: 534, width: 8,  assignment: "Si-Si TO ~534"}
       # Si-C
       - {model: voigt, amp: 0.2,  center: 586, width: 10, assignment: "Si-C disordered SiC ~586"}
       - {model: voigt, amp: 0.2,  center: 660, width: 8,  assignment: "Si-C disordered SiC ~660"}
