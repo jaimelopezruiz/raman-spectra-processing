@@ -1,3 +1,5 @@
+import re
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -50,6 +52,43 @@ def _find_data_section(input_path, encoding="utf-8-sig"):
     except OSError:
         pass
     return None
+
+def _read_loose_numeric_pairs(input_path):
+    """
+    Last-resort reader: the first two numeric tokens of every line, tolerant of
+    lines wrapped in double quotes and of mixed tab/comma/space delimiters.
+    Returns (x, y) arrays, or None if fewer than two data lines were found.
+
+    Needed because some WITec/Andor exports quote each whole line, e.g.
+    `" 5.36546E+02\\t 1.45580E+03"` in the Au 2.5e15 RT-before spectrum
+    (`03 SiC Au 2,5E15 RT before anneal--Spec--003--Spec.Data 1.csv`, the source
+    of the published RT-before chi). Every delimiter-based pandas attempt reads
+    such a line as one non-numeric field, so the file failed to load at all.
+    This runs only after all of those attempts have failed, so it cannot change
+    how any already-loadable file is parsed.
+    """
+    for enc in ("utf-8-sig", "latin-1"):
+        xs, ys = [], []
+        try:
+            with open(input_path, "r", encoding=enc, errors="replace") as handle:
+                for line in handle:
+                    tokens = re.split(r"[\s,;]+", line.strip().strip('"').strip())
+                    values = []
+                    for token in tokens:
+                        try:
+                            values.append(float(token.strip('"')))
+                        except ValueError:
+                            break
+                    if len(values) >= 2:
+                        xs.append(values[0])
+                        ys.append(values[1])
+        except OSError:
+            return None
+        if len(xs) >= 2:
+            return (np.asarray(xs, dtype=np.float64),
+                    np.asarray(ys, dtype=np.float64))
+    return None
+
 
 def _read_spectrum_table(input_path):
     # --- Handle files with a [Data] section marker (e.g. WITec exports) ---
@@ -135,6 +174,9 @@ def _read_spectrum_table(input_path):
             }
 
     if best_candidate is None or best_candidate["data"].empty:
+        loose = _read_loose_numeric_pairs(input_path)
+        if loose is not None:
+            return loose
         details = "; ".join(errors) if errors else "No parse attempt produced two numeric columns."
         raise ValueError(
             "[!] Could not load two numeric spectrum columns from the input file. "
