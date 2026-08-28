@@ -37,3 +37,8 @@ MEETING NOTES 22_07_2026.txt
 *.docx
 notesondiffs.md
 zenodo-setup.md
+# Paper co-work session files (protocol, running state, docx editing helper) —
+# working notes about writing the manuscript, not part of the citable code.
+STATE.md
+WORKFLOW.md
+docx_surgery.py
