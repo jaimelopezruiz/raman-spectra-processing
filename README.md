@@ -327,10 +327,36 @@ width bound. The Voigt and pseudo-Voigt profiles have no such singularity.
 `input/` contains the measured spectra: per-sample survey spectra
 (`<n> <ion> <temp> <dose>.csv`) and the in-situ annealing series under
 `input/Annealing/` (WITec exports with `[Data]` section markers are parsed
-automatically). Microscope images (.czi/.bmp/.png) acquired alongside the
-spectra are kept locally but not tracked in git; contact the authors for
-the full imaging dataset. `params/*.xlsx` hold the collated fitted
-parameters used for the report's analysis figures.
+automatically), including the Au-implanted single-crystal series
+(`Au 2.5e15 RT`, wavelength-axis exports). Microscope images (.czi/.bmp/.png)
+acquired alongside the spectra are kept locally but not tracked in git;
+contact the authors for the full imaging dataset. `params/*.xlsx` hold the
+collated fitted parameters used for the report's analysis figures.
+
+`data/` holds the non-spectral source data the published figures need:
+
+| Path | Contents | Used by |
+|---|---|---|
+| `data/srim/<condition>/` | SRIM `Damage.csv` / `Ions.csv` (depth vs dpa / at. fraction) for the Au, He, Ni and Pb irradiations | Figure 2(c), Figure SM.6 |
+| `data/stress_map/points_irradiated/` | the 12 point spectra of the stress map | per-point u(ω) for Figure 11 |
+| `data/stress_map/points_unirradiated/` | 5 unirradiated reference point spectra | reference scatter quoted in `fit_stress_points.py` |
+| `data/stress_map/` | optical micrograph, pixel coordinates, `Stress Mapping.xlsx` (the manual WiRE read-offs that ARE the map data) | Figure 11(a) |
+| `data/figure_sources/` | two rasters of the manuscript's own figures | Figures 2(a,b) and 4, whose underlying data is not ours to distribute |
+
+## Reproducing the published results
+
+```bash
+python regenerate_all.py           # every figure, table and CSV, in dependency order
+python regenerate_all.py --list    # just print the steps
+```
+
+The scripts in `output/` are not independent — `make_sm3_table.py` reads the
+per-spectrum CSVs that `main.py` writes, and `make_figures.py` reads the χ
+tables that `annealing_chi.py` and `output/make_au_chi_rt.py` write — so run
+them through the driver rather than individually. A clean checkout reproduces
+every published artefact byte-for-byte; the only exception is
+`*_run_metadata.json`, which deliberately records the absolute input path and
+git commit of the run that produced it.
 
 ## Repository layout
 
@@ -346,10 +372,13 @@ multi_spectra_comparison.py annealing-series overlay
 replot_from_csv.py          figure rebuild from saved outputs
 annealing_chi.py            χ vs annealing temperature (window integration + baseline band)
 cross_spectrum_ratios.py    raw-count area/intensity ratios vs pristine (semi-quantitative)
+regenerate_all.py           rebuild every published result in dependency order
 params/configs/             per-sample fitting configs (the physics input)
 input/                      measured spectra
-output/                     generated results (per-spectrum CSVs); git-ignored,
-                            regenerate with `python main.py <file>`
+data/                       non-spectral source data (SRIM, stress map, figure sources)
+output/                     figure/table generation scripts (tracked) and the
+                            results they produce (git-ignored — rebuild with
+                            `python regenerate_all.py`)
 archive/                    historical scratch scripts and tuning notes
 ```
 
