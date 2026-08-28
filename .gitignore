@@ -42,3 +42,6 @@ zenodo-setup.md
 STATE.md
 WORKFLOW.md
 docx_surgery.py
+.claude
+.claude/claude.md
+.claude/settings.local.json
