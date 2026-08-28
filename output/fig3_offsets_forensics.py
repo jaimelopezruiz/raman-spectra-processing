@@ -4,9 +4,9 @@ as-acquired baselines?  Ticket C17(b).
 The caption claims "All spectra are shown as-acquired (no post-processing)", yet
 the four traces sit at ~325 / ~331 / ~336 / ~342 a.u. The underlying single-crystal
 spectra are not on this machine (searched 2026-08-06: no .opj/.opju/.ogg/.wip/.wdf
-anywhere under the user profile, and no single-crystal exports in the repo,
-Temporal Claude Context, ZZ, Downloads or OneDrive), so the only evidence available
-is the published raster itself.
+anywhere under the user profile, and no single-crystal exports in the repo or in
+any of the authors' working folders), so the only evidence available is the
+published raster itself.
 
 This script recovers the four traces from `output/fig_3_source_image4.png` by
 colour, calibrates pixels to the plotted y axis from the tick marks, and measures
@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.stdout.reconfigure(errors="replace")
 
 OUT = "output"
-SRC = os.path.join(OUT, "fig_3_source_image4.png")
+SRC = os.path.join("data", "figure_sources", "fig_3_source_image4.png")
 # x axis calibration from the major tick marks measured on the axis line
 X0_PX, X_PER_CM1 = 125.0, (834.0 - 125.0) / 2200.0
 UNIRR_SCALE = 0.25          # the legend's "Unirradiated (x0.25)"

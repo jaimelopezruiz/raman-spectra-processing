@@ -51,7 +51,7 @@ sys.stdout.reconfigure(errors="replace")
 OUT = "output"
 DOCX = "Paper WIP Draft - Lilly Edits Implemented.docx"
 MEDIA = "word/media/image4.png"
-SOURCE = os.path.join(OUT, "fig_3_source_image4.png")
+SOURCE = os.path.join("data", "figure_sources", "fig_3_source_image4.png")
 TARGET = os.path.join(OUT, "fig_4_single_crystal_wide.png")
 
 TARGET_ASPECT = 1.585      # matches the C14 survey overlay (1923 x 1213)

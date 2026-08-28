@@ -24,14 +24,12 @@ from scipy.optimize import curve_fit
 
 sys.stdout.reconfigure(errors="replace")
 
-IRR_DIR = r"Temporal Claude Context/Irradiated Data Points Stress Mapping"
+IRR_DIR = r"data/stress_map/points_irradiated"
 # Unirradiated reference point spectra, used ONLY for the transparency scatter
-# quoted in the docstring (0.67 cm-1) — not for any published value. They live
-# outside the repo; override with RAMAN_UNIRR_DIR if they move. Written via
-# expanduser rather than a literal home path so no username is committed.
-UNIRR_DIR = os.environ.get(
-    "RAMAN_UNIRR_DIR",
-    os.path.join(os.path.expanduser("~"), "Downloads", "OneDrive_1_22-07-2026"))
+# quoted in the docstring (0.67 cm-1) — not for any published value. Kept in a
+# SEPARATE folder from the irradiated points on purpose: this script globs
+# "*.csv" in IRR_DIR, so a shared folder would feed the references into the map.
+UNIRR_DIR = r"data/stress_map/points_unirradiated"
 EXCEL_POS = [785.14, 786.0, 788.7, 788.75, 785.0, 786.9, 786.93, 788.72,
              786.93, 786.95, 786.95, 787.71]
 WIN = (776.0, 800.0)

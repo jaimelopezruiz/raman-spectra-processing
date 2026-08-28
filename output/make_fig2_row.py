@@ -27,8 +27,8 @@ from PIL import Image
 sys.stdout.reconfigure(errors="replace")
 
 OUT = "output"
-SRC = os.path.join(OUT, "fig2_source_image2.png")
-AU_CSV = r"Temporal Claude Context/SRIM Data/Au 3 MeV - 2.5e15 ions cm-2/Damage.csv"
+SRC = os.path.join("data", "figure_sources", "fig2_source_image2.png")
+AU_CSV = r"data/srim/Au 3 MeV - 2.5e15 ions cm-2/Damage.csv"
 DPI = 150
 
 img = np.asarray(Image.open(SRC).convert("RGB"))

@@ -20,6 +20,10 @@ from matplotlib.gridspec import GridSpec
 
 sys.stdout.reconfigure(errors="replace")
 
+# runnable as `python output/make_sm1_curvefits.py` from the repo root: sys.path[0]
+# is output/, so the repo modules need adding explicitly
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from preprocessing import preprocess
 from curve_fitting import fit_peaks_regionwise
 from config import load_sample_config, find_matching_config

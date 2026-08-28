@@ -1,6 +1,6 @@
 """SM.4 — SRIM damage/implantation profiles for the Au, He, Ni and Pb
 irradiations (per Dong Liu comment [30]), from JLR's exported SRIM CSVs in
-"Temporal Claude Context/SRIM Data/<condition>/{Damage,Ions}.csv"
+"data/srim/<condition>/{Damage,Ions}.csv"
 (depth [nm], value; Damage = dpa at the folder's fluence, Ions = ion
 concentration as atomic fraction — verified against range/straggle estimates).
 
@@ -22,10 +22,14 @@ import matplotlib.pyplot as plt
 
 sys.stdout.reconfigure(errors="replace")
 
+# runnable as `python output/make_sm4_srim.py` from the repo root: sys.path[0] is
+# output/, so the repo modules need adding explicitly
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from analysis_plotting import apply_pub_style, PUB_DPI
 
 OUT = "output"
-BASE = r"Temporal Claude Context/SRIM Data"
+BASE = r"data/srim"
 TOL_BLUE, TOL_RED = "#4477AA", "#EE6677"
 
 # (panel, title, folder plotted, depth unit, extra-fluence note for the stub,

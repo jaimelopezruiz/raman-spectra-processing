@@ -269,7 +269,7 @@ savefig_exact(fig, "fig_6_fwhm_lo.png", (2170, 810))
 
 # ===== Fig 12 (consolidating 17): χ vs annealing T — (a) Au 2.5e15, (b) Si 2.5 dpa/300 °C =====
 # Au series recomputed 2026-07-29 with the same integrated estimator (annealing_chi.py
-# --convert-wavelength on "Temporal Claude Context/Au 2.5e15 spectra CSV"); RT endpoints
+# --convert-wavelength on "input/Annealing/Au 2.5e15 RT"); RT endpoints
 # from au_chi_RT.csv (narrow-window zoom scans excluded — D window not covered).
 fig, (axa, axb) = plt.subplots(1, 2, figsize=(11, 4.2), dpi=PUB_DPI, sharey=False)
 
@@ -353,7 +353,7 @@ fig, (axm, axs) = plt.subplots(1, 2, figsize=(11, 4.6), dpi=PUB_DPI,
 # order as MAP_PTS (top point, two rows L->R, vertical tail). Physical scale
 # from the 2.5 µm grid step = mean adjacent-column pixel spacing (~50 px).
 res = ~below
-PT2 = r"Temporal Claude Context/Stress Map Pt 2"
+PT2 = r"data/stress_map"
 pix = pd.read_csv(os.path.join(PT2, "stress_map_points_pixels.csv"))
 img = plt.imread(os.path.join(PT2, "Irr Region of Interest Marked.png"))
 px_x, px_y = pix["x"].to_numpy(), pix["y"].to_numpy()
@@ -415,8 +415,8 @@ def norm01(y):
 
 # ===== §3.1.1 survey overlay (C14) ==========================================
 # Landscape ~1.6:1, larger fonts, right-hand-side trace labels (no legend), and
-# the band / crystalline-feature annotations of the earlier version of this
-# figure ("RB Overlay Previous.png", Temporal Claude Context) restored.
+# the band / crystalline-feature annotations of an earlier version of this
+# figure restored (that raster is a working file, not part of the repo).
 #
 # STACKING: ascending disorder BOTTOM→TOP, i.e. unirradiated at the bottom and
 # Ne 2.5 dpa / 300 °C at the top — the same order as the caption and as the

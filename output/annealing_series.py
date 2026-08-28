@@ -31,7 +31,7 @@ from annealing_chi import temp_from_name
 NE_DIR = os.path.join("input", "Annealing", "Ne 2.5dpa 300C")
 SI300_DIR = os.path.join("input", "Annealing", "Si 2.5dpa  300C")
 SI750_DIR = os.path.join("input", "Annealing", "Si 2.5dpa 750C")
-AU_DIR = os.path.join("Temporal Claude Context", "Au 2.5e15 spectra CSV")
+AU_DIR = os.path.join("input", "Annealing", "Au 2.5e15 RT")
 
 SERIES = {
     "au": dict(
