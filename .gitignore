@@ -45,3 +45,9 @@ docx_surgery.py
 .claude
 .claude/claude.md
 .claude/settings.local.json
+
+# Discussion/Conclusions co-work context pack (working files, not for release)
+pack/
+lxml_helpers.py
+batchC_edit.py
+batchD_edit.py
