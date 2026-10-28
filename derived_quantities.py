@@ -197,6 +197,40 @@ def chi_integrated(x, y, d_window=CHI_D_WINDOW, to_window=CHI_TO_WINDOW):
     }
 
 
+# === Integrated-band ψ, the G-band analogue of χ (ticket C27; audit only) ===
+# ψ = ∫(G window) / ∫(TO window), same TO_WINDOW and same construction as χ.
+# ADDITIVE: does not redefine chi_integrated, CHI_D_WINDOW or CHI_TO_WINDOW, and
+# is not itself "the" published χ. Built because no per-step peak fit or
+# G-window integration existed anywhere in the pipeline before C27 (C26 found
+# the annealing series' D/G question unsettleable without one).
+#
+# CAVEAT ψ shares with no other quantity in this module: unlike χ's D window,
+# which sits on an essentially empty floor in the pristine spectrum, the G
+# window (1560-1600) sits in the long tail of the very broad D-band lineshape
+# (FWHM 90-230 cm-1 in the survey fits), so ψ > 0 even with NO real G-band
+# component — it is not, by itself, a presence/absence test. Interpret ψ only
+# against the no-G-band floor + spread from specimens C26 already fit-confirmed
+# to have no G-band component (see annealing_chi_g.py), the same way χ is read
+# against the pristine floor in make_figures.py.
+CHI_G_WINDOW = (1560.0, 1600.0)
+
+
+def chi_g_integrated(x, y, g_window=CHI_G_WINDOW, to_window=CHI_TO_WINDOW):
+    """ψ from direct window integration — the G-band analogue of chi_integrated.
+
+    Same estimator, same TO_WINDOW reference, different numerator band. See the
+    module-level CAVEAT above: ψ must be read against a no-G-band floor, not
+    against zero.
+    """
+    a_g = _window_integral(x, y, g_window)
+    a_to = _window_integral(x, y, to_window)
+    return {
+        "chi_g": a_g / a_to if a_to else float("nan"),
+        "A_G": a_g, "A_TO": a_to,
+        "g_window": tuple(g_window), "to_window": tuple(to_window),
+    }
+
+
 def line_through_two_points(x1, y1, uy1, x2, y2, uy2):
     """Slope/intercept of the line through two (x, y±u_y) points (x exact).
 
