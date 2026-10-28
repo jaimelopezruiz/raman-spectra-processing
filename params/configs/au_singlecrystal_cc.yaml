@@ -1,0 +1,53 @@
+# Peak-fit config for the Au-implanted single-crystal 6H-SiC C-C region
+# (D-band ~1350-1420, G-band ~1580-1600 cm^-1), built for ticket C29 to check
+# R24 ("Au-implanted specimen develops both D and G bands after annealing") by
+# fit rather than by eye, the way C26/C27 checked the Si/Ne series.
+#
+# Scope: this config covers ONLY the C-C region. The Au samples are
+# single-crystal 6H-SiC (see output/annealing_series.py: "Au-implanted
+# single-crystal 6H-SiC"), a different material class from the
+# polycrystalline REFEL/RB-SiC the other params/configs/*.yaml files describe,
+# so the low-wavenumber Si-Si/Si-C peak set from si_2.5dpa_300C.yaml /
+# annealing.yaml is deliberately NOT reused here — it would misassign
+# single-crystal 6H-SiC phonon modes outside the C-C window this ticket asked
+# about. Not wired into regenerate_all.py or any published figure; used
+# directly by au_cc_peakfit.py.
+#
+# D/G peak set and the BWF G-band lineshape convention mirror
+# params/configs/si_2.5dpa_300C.yaml (the tracked, C26-validated as-irradiated
+# G-band template C27 also reused as its method-B tool), so the same
+# fit-quality bar (FWHM range, amp/sigma) applies when judging these fits.
+#
+# Validated (C29) against the Au RT-after spectrum (input file "30 SiC Au
+# 2,5E15 RT after anneal--Spec--030--Spec.Data 1.csv"): the clearest,
+# highest-SNR two-peak spectrum in the series — a resolved D-band hump
+# (~1350-1420) and a separate, sharp G-band peak at ~1600 with a genuine
+# valley near 1500-1520 between them, a shape reproduced (noisier) across all
+# three RT-after acquisitions (030/031/032) and absent pre-anneal and at low
+# anneal temperatures, which show a single broad D-band-only hump instead.
+# See output/C29_au_cc_peakfit_audit.md for the full validation record.
+sample: "Au 2.5e15 RT - C-C region (D+G)"
+match: ['au.*2[.,]5e15']
+priority: 15
+material: "Ion-implanted single-crystal 6H-SiC"
+irradiation: "Au ions, 2.5e15 cm^-2, RT-implanted, stepwise annealed"
+references: >-
+  D/G peak set and BWF G-band lineshape convention follow
+  params/configs/si_2.5dpa_300C.yaml (Sorieul et al., Chaabane et al., Gorban
+  et al., report refs [26-28]); this config is new for C29 and covers only the
+  C-C region, not the full spectrum.
+
+preprocessing:
+  crop_min: 170
+  crop_max: 2000
+  baseline_order: 5
+  normalisation: vector-0to1
+
+fitting:
+  center_tolerance: 100
+
+regions:
+  - range: [1150, 1750]
+    peaks:
+      - {model: lorentz, amp: 0.5, center: 1390, width: 80, width_max: 250, assignment: "C-C D-band 1350-1420 (mixed sp2/sp3)"}
+      - {model: bwf, amp: 0.2, center: 1600, width: 10, q: 2, assignment: "C-C G-band 1580-1600 (sp2)"}
