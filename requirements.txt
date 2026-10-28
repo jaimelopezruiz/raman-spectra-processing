@@ -8,4 +8,7 @@ ramanspy==0.2.10
 scipy==1.17.1
 
 # Dev/test only (not needed to run the pipeline): pytest tests/
+# threadpoolctl pins BLAS threads for the deterministic refit-MC test
+# (tests/test_uncertainty_mc.py).
 pytest
+threadpoolctl==3.6.0

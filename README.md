@@ -90,7 +90,7 @@ recorded in `<name>_derived.json` two ways:
   TO-region peak areas, with a covariance-aware 1σ (correlations between
   overlapping peaks *within* a band are included; the D and TO bands are
   effectively independent — measured correlation ≈ 0). Validated against a
-  Monte-Carlo simulation in `tests/`.
+  refit Monte Carlo on synthetic white-noise data (`tests/test_uncertainty_mc.py`; not real spectra).
 
 For the annealing series (χ vs temperature, report Figs 12/17), use
 `annealing_chi.py`, which integrates each spectrum and reports χ with a

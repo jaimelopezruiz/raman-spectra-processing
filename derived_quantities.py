@@ -9,8 +9,8 @@ Uncertainty is propagated from the per-region covariance matrix exposed by
 curve_fitting.fit_peaks_regionwise (`region_fits`). Peaks fitted together in one
 region may be correlated (overlapping line shapes → non-zero off-diagonal
 covariance); peaks in different regions come from independent fits and are
-treated as uncorrelated. Validated against a 2×10⁵-sample Monte Carlo
-(analytic vs MC u(χ) agree to ~0.1%); see tests/test_derived.py.
+treated as uncorrelated. Checked by a refit Monte Carlo on synthetic white-noise
+data only, N=2000, tolerances as implemented: tests/test_uncertainty_mc.py.
 
 Band membership is caller-supplied (a predicate over each peak) because *which*
 peaks constitute, say, the "Si-C TO band" is a physics/definition choice that
